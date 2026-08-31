@@ -230,11 +230,12 @@ const CANDY_COLORS = {
 
 // Discount ladder keyed by number of packs/boxes ordered — never exceeds an item's
 // own margin cap, so price per unit can't drop below 50% of the base (sale − buy) margin.
+// Web-version schedule is trimmed a bit below the tablet version's (was 3.3/6.7/10).
 const TIER_BREAKS = [
   { min: 1, pct: 0 },
-  { min: 5, pct: 3.3 },
-  { min: 10, pct: 6.7 },
-  { min: 20, pct: 10 },
+  { min: 5, pct: 2.5 },
+  { min: 10, pct: 5 },
+  { min: 20, pct: 7.5 },
 ];
 
 // Manually-priced duplicate listings (same drink, no "AZ" label) — appended after
