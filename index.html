@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="ru" translate="no">
+<head>
+  <meta name="google" content="notranslate" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Гермес — Заказ</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="theme-color" content="#1B5E20" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <style>
+    html, body { margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.25.0/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="react">
+
+const { useState, useMemo } = React;
+
+function Plus({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>;
+}
+function Minus({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /></svg>;
+}
+function X({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>;
+}
+function ShoppingCart({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" /></svg>;
+}
+function Sparkle({ size = 14 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z" /></svg>;
+}
+function MoneyIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="6" rx="7.5" ry="3" />
+      <path d="M4.5 6v5.5c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V6" />
+      <path d="M4.5 11.5V17c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-5.5" />
+    </svg>
+  );
+}
+function Search({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
+}
+function Star({ size = 10 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.7z" /></svg>;
+}
+
+// Small drawn flag rectangles instead of Unicode flag emoji — Windows has no
+// color-flag glyphs and renders those as bare two-letter country codes instead.
+function FlagIcon({ country, size = 14 }) {
+  const w = size * 1.5, h = size;
+  const common = { width: w, height: h, viewBox: '0 0 18 12', style: { borderRadius: 2, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)', flexShrink: 0 } };
+  if (country === 'Грузия') return (
+    <svg {...common}><rect width="18" height="12" fill="#fff" /><rect x="7.2" width="3.6" height="12" fill="#DA291C" /><rect y="4.2" width="18" height="3.6" fill="#DA291C" /></svg>
+  );
+  if (country === 'Ирак') return (
+    <svg {...common}><rect width="18" height="4" fill="#CE1126" /><rect y="4" width="18" height="4" fill="#fff" /><rect y="8" width="18" height="4" fill="#000" /></svg>
+  );
+  if (country === 'Азербайджан') return (
+    <svg {...common}><rect width="18" height="4" fill="#00B5E2" /><rect y="4" width="18" height="4" fill="#EF3340" /><rect y="8" width="18" height="4" fill="#509E2F" /></svg>
+  );
+  if (country === 'Узбекистан') return (
+    <svg {...common}><rect width="18" height="4" fill="#0099B5" /><rect y="4" width="18" height="4" fill="#fff" /><rect y="8" width="18" height="4" fill="#1EB53A" /></svg>
+  );
+  if (country === 'Казахстан') return (
+    <svg {...common}><rect width="18" height="12" fill="#00AFCA" /><circle cx="6" cy="6" r="2.3" fill="#FEC50C" /></svg>
+  );
+  return null;
+}
+// ---------- Catalog (from Прайс-лист_2.xlsx — real sale/purchase prices, pack sizes parsed from names) ----------
+const DRINKS_DATA = [
+  { msId: 'cb288787-90bf-11f1-0a80-0e72000d79db', name: 'Coca-Cola 0.33л ж/б IR', brand: 'Coca-Cola', pack: 24, sale: 47.0, buy: 41.5, maxpct: 5.9 },
+  { msId: '10b87eb6-90c0-11f1-0a80-1f4a000dc4e1', name: 'Coca-Cola 0.33л ст/б GR', brand: 'Coca-Cola', pack: 15, sale: 70.0, buy: 36.0, maxpct: 24.3 },
+  { msId: '93220d1d-90bf-11f1-0a80-1359000c8831', name: 'Coca-Cola 0.5л GR', brand: 'Coca-Cola', pack: 15, sale: 65.0, buy: 30.0, maxpct: 26.9 },
+  { msId: '50cfc3ad-90be-11f1-0a80-18be000d4857', name: 'Coca-Cola 1л AZ', brand: 'Coca-Cola', pack: 12, sale: 89.0, buy: 44.16, maxpct: 25.2 },
+  { msId: '2294e746-90be-11f1-0a80-18be000d413f', name: 'Coca-Cola 2л AZ', brand: 'Coca-Cola', pack: 6, sale: 163.0, buy: 66.66, maxpct: 29.6 },
+  { msId: 'ab75ce02-90c0-11f1-0a80-1b8b000d6a98', name: 'Fanta 0.33л ж/б IR', brand: 'Fanta', pack: 24, sale: 50.0, buy: 0.0, maxpct: 0 },
+  { msId: '3d63832a-90bf-11f1-0a80-06ce000cf9fe', name: 'Fanta 1л AZ', brand: 'Fanta', pack: 12, sale: 85.0, buy: 34.16, maxpct: 29.9 },
+  { msId: '16b46a9e-90bf-11f1-0a80-01ad000dddb5', name: 'Fanta 2л AZ', brand: 'Fanta', pack: 6, sale: 145.0, buy: 52.5, maxpct: 31.9 },
+  { msId: '8786fb18-90c0-11f1-0a80-0d6c000e07a9', name: 'Pepsi 0.33л ж/б IR', brand: 'Pepsi', pack: 24, sale: 49.0, buy: 40.0, maxpct: 9.2 },
+  { msId: '991bb067-90e4-11f1-0a80-01ad00147d07', name: 'Pepsi 0.5л GR', brand: 'Pepsi', pack: 12, sale: 50.0, buy: 31.66, maxpct: 18.3 },
+  { msId: '66a90344-90c0-11f1-0a80-1b8b000d5c41', name: 'Pepsi 1л UZB', brand: 'Pepsi', pack: 12, sale: 63.0, buy: 34.16, maxpct: 22.9 },
+  { msId: '4940c6e0-90c0-11f1-0a80-01ad000e4f6d', name: 'Pepsi 2л GR', brand: 'Pepsi', pack: 6, sale: 120.0, buy: 53.33, maxpct: 27.8 },
+  { msId: 'c8314c5c-90c0-11f1-0a80-115d000d8469', name: 'Sprite 0.33л ж/б IR', brand: 'Sprite', pack: 24, sale: 50.0, buy: 0.0, maxpct: 0 },
+  { msId: 'ed198a05-90be-11f1-0a80-0e72000d2e9e', name: 'Sprite 1л AZ', brand: 'Sprite', pack: 12, sale: 85.0, buy: 34.16, maxpct: 29.9 },
+  { msId: '79d33a45-90be-11f1-0a80-1f4a000d6ba5', name: 'Sprite 2л KZ', brand: 'Sprite', pack: 6, sale: 142.0, buy: 55.0, maxpct: 30.6 },
+];
+
+const CANDY_DATA = [
+  { msId: 'a9578c03-999c-11f1-0a80-0e2b003732d9', name: 'Батончики Ореховая роща', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 380.0, buy: 340.0, maxpct: 5.3 },
+  { msId: 'fd23b5f3-90dc-11f1-0a80-115d00130630', name: 'Десерт Ломтишка глазированный', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 550.0, buy: 500.0, maxpct: 4.5 },
+  { msId: 'b56bc56e-999b-11f1-0a80-09f000379926', name: 'Карамель Алёнка', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 240.0, buy: 185.0, maxpct: 11.5 },
+  { msId: '5f140b7d-99cb-11f1-0a80-0056003aa8f7', name: 'Карамель Апельсиновая', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 240.0, buy: 200.0, maxpct: 8.3 },
+  { msId: '985d131b-99cb-11f1-0a80-01f9003883d0', name: 'Карамель Барбарис', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 200.0, buy: 160.0, maxpct: 10.0 },
+  { msId: '3c42bf58-99cc-11f1-0a80-021400394219', name: 'Карамель Бубенчики', maker: 'Красный Октябрь', pack: 6.0, unit: 'кг', sale: 230.0, buy: 190.0, maxpct: 8.7 },
+  { msId: 'ff53187a-99cb-11f1-0a80-1d7a0038e287', name: 'Карамель Гусиные лапки', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 355.0, buy: 315.0, maxpct: 5.6 },
+  { msId: 'b2baed8f-99cb-11f1-0a80-1a560039367f', name: 'Карамель Дюшес', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 185.0, buy: 145.0, maxpct: 10.8 },
+  { msId: 'a022a4a0-9999-11f1-0a80-1965003827f3', name: 'Карамель Кул КЭНДИ ассорти', maker: 'Confectum', pack: 1, unit: 'шт.', sale: 999.0, buy: 950.0, maxpct: 2.5 },
+  { msId: '56699c06-90df-11f1-0a80-07b600131281', name: 'Карамель Лакомка суперкакао', maker: 'Рот Фронт', pack: 3.0, unit: 'кг', sale: 230.0, buy: 180.0, maxpct: 10.9 },
+  { msId: '6ada3a57-90df-11f1-0a80-0ca800133abf', name: 'Карамель Лакомка супермолочная', maker: 'Рот Фронт', pack: 3.0, unit: 'кг', sale: 230.0, buy: 180.0, maxpct: 10.9 },
+  { msId: 'cdfcfab5-99cb-11f1-0a80-112000398b50', name: 'Карамель Лимонная', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 240.0, buy: 200.0, maxpct: 8.3 },
+  { msId: '174f1349-90d9-11f1-0a80-0fd40012d80c', name: 'Карамель Лимончики с фруктовой начинкой', maker: 'Рот Фронт', pack: 4.0, unit: 'кг', sale: 250.0, buy: 228.0, maxpct: 4.4 },
+  { msId: 'ddba0818-90d7-11f1-0a80-15fa00120127', name: 'Карамель Москвичка', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 380.0, buy: 350.0, maxpct: 3.9 },
+  { msId: '7b649009-99cb-11f1-0a80-01f900388341', name: 'Карамель Мятная', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 245.0, buy: 205.0, maxpct: 8.2 },
+  { msId: 'a218d183-99ca-11f1-0a80-1cef00389d66', name: 'Карамель Сказка', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 235.0, buy: 205.0, maxpct: 6.4 },
+  { msId: '8bcd6a69-99cc-11f1-0a80-18d1003a446c', name: 'Карамель Слива', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 230.0, buy: 200.0, maxpct: 6.5 },
+  { msId: '17b84219-9999-11f1-0a80-02140037fd1c', name: 'Карамель Смайл КЭНДИ ассорти', maker: 'Confectum', pack: 3.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: 'ac42120f-99cc-11f1-0a80-18d1003a449d', name: 'Карамель Снежок', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 250.0, buy: 220.0, maxpct: 6.0 },
+  { msId: 'd605c9a6-99ca-11f1-0a80-15c40039bd40', name: 'Карамель Чёрная смородина', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 230.0, buy: 200.0, maxpct: 6.5 },
+  { msId: '1926526b-9978-11f1-0a80-11200035eb23', name: 'Бабаевские ориг. с фундуком и какао', maker: 'Бабаевский', pack: 4.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: '842c1aab-9987-11f1-0a80-075700367c50', name: '15гр ЗОЛОТА', maker: 'АтАг', pack: 3.0, unit: 'кг', sale: 750.0, buy: 700.0, maxpct: 3.3 },
+  { msId: 'c9bb8a5d-90dd-11f1-0a80-115d00132049', name: 'Bounty minis', maker: 'Mars', pack: 3.0, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: 'a11907b2-9b23-11f1-0a80-1cf10021cda0', name: 'Bounty minis', maker: 'Mars', pack: 7.0, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: 'b350697c-90dd-11f1-0a80-005800134aa3', name: 'Mars minis', maker: 'Mars', pack: 2.7, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: '84e8d679-9b23-11f1-0a80-1d7d0022a229', name: 'Mars minis', maker: 'Mars', pack: 7.0, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: '7f39c83a-90dd-11f1-0a80-0e72001372e0', name: 'Snickers minis', maker: 'Mars', pack: 2.9, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: '9d4f81fd-90dd-11f1-0a80-115d00131c7c', name: 'Twix minis', maker: 'Mars', pack: 2.7, unit: 'кг', sale: 720.0, buy: 680.0, maxpct: 2.8 },
+  { msId: '98da8f18-90de-11f1-0a80-1359001215ce', name: 'Адель', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 690.0, buy: 630.0, maxpct: 4.3 },
+  { msId: '46047490-9984-11f1-0a80-15c40036bddf', name: 'Алёнка вафельные', maker: 'Красный Октябрь', pack: 4.0, unit: 'кг', sale: 730.0, buy: 700.0, maxpct: 2.1 },
+  { msId: '2ef66611-9978-11f1-0a80-01f900349f07', name: 'Бабаевская белочка', maker: 'Бабаевский', pack: 5.0, unit: 'кг', sale: 700.0, buy: 650.0, maxpct: 3.6 },
+  { msId: 'ce73be4f-9981-11f1-0a80-0e2b00355983', name: 'Бабаевский с трюфельным кремом', maker: 'Бабаевский', pack: 2.0, unit: 'кг', sale: 800.0, buy: 750.0, maxpct: 3.1 },
+  { msId: '84e644fa-90da-11f1-0a80-115d0012b2b4', name: 'Батончики', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 390.0, buy: 340.0, maxpct: 6.4 },
+  { msId: '244b822f-90db-11f1-0a80-0ca80012b55e', name: 'Буревестник', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 340.0, buy: 290.0, maxpct: 7.4 },
+  { msId: 'b13f1699-9997-11f1-0a80-1fb60037d535', name: 'Вдохновение Бабаевские', maker: 'Бабаевский', pack: 5.0, unit: 'кг', sale: 760.0, buy: 720.0, maxpct: 2.6 },
+  { msId: 'c831ce51-9995-11f1-0a80-05be00365efb', name: 'Визит Бабаевские', maker: 'Бабаевский', pack: 4.0, unit: 'кг', sale: 830.0, buy: 780.0, maxpct: 3.0 },
+  { msId: 'eb74808a-9984-11f1-0a80-15c40036c757', name: 'Вишня в ликере', maker: 'Mieszko', pack: 2.5, unit: 'кг', sale: 950.0, buy: 850.0, maxpct: 5.3 },
+  { msId: 'd64613c4-9997-11f1-0a80-18d10038aced', name: 'Восточный грильяж', maker: 'Красный Октябрь', pack: 4.0, unit: 'кг', sale: 420.0, buy: 380.0, maxpct: 4.8 },
+  { msId: '44406375-9987-11f1-0a80-075700367729', name: 'Грильяж в шок. глазури', maker: 'Рот Фронт', pack: 6.0, unit: 'кг', sale: 750.0, buy: 700.0, maxpct: 3.3 },
+  { msId: '3313c19d-90de-11f1-0a80-15fa0012cf2a', name: 'Жаклин', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 330.0, buy: 270.0, maxpct: 9.1 },
+  { msId: '826b3de1-999a-11f1-0a80-1cef00376584', name: 'Забегай на чай', maker: 'АтАг', pack: 2.0, unit: 'кг', sale: 650.0, buy: 600.0, maxpct: 3.8 },
+  { msId: '6648e51d-9994-11f1-0a80-11200037e689', name: 'Замоскворечье', maker: 'Рот Фронт', pack: 4.0, unit: 'кг', sale: 590.0, buy: 550.0, maxpct: 3.4 },
+  { msId: '2f543915-9a6a-11f1-0a80-1125000140ae', name: 'Золотая лилия', maker: 'Конти', pack: 6.0, unit: 'кг', sale: 290.0, buy: 270.0, maxpct: 3.4 },
+  { msId: '7250c4ee-90d9-11f1-0a80-00580012a4f1', name: 'Золотой Степ', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 370.0, buy: 340.0, maxpct: 4.1 },
+  { msId: '60ebe721-9997-11f1-0a80-075700379b8a', name: 'Золотые Купола', maker: 'Рот Фронт', pack: 7.0, unit: 'кг', sale: 595.0, buy: 545.0, maxpct: 4.2 },
+  { msId: 'a87d9fe5-9984-11f1-0a80-0757003647b0', name: 'Каракум', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 670.0, buy: 620.0, maxpct: 3.7 },
+  { msId: 'c852e98a-9982-11f1-0a80-1a56003606a8', name: 'Коровка вафельные молочные', maker: 'Рот Фронт', pack: 2.0, unit: 'кг', sale: 370.0, buy: 340.0, maxpct: 4.1 },
+  { msId: 'd0c8c598-9982-11f1-0a80-01f90035b02f', name: 'Коровка вафельные шоколадные', maker: 'Рот Фронт', pack: 2.0, unit: 'кг', sale: 370.0, buy: 340.0, maxpct: 4.1 },
+  { msId: '02f47393-999c-11f1-0a80-07570037e998', name: 'Коровка молочная', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 390.0, buy: 350.0, maxpct: 5.1 },
+  { msId: 'e63e2905-9998-11f1-0a80-07570037abba', name: 'Кофе КЭНДИ ассорти', maker: 'Confectum', pack: 1.5, unit: 'кг', sale: 999.0, buy: 950.0, maxpct: 2.5 },
+  { msId: '02091ffb-9977-11f1-0a80-1d7a0034d578', name: 'Красная шапочка', maker: 'Красный Октябрь', pack: 4.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: '3e1ec860-90dc-11f1-0a80-13590011caec', name: 'Красный мак', maker: 'Красный Октябрь', pack: 6.0, unit: 'кг', sale: 610.0, buy: 560.0, maxpct: 4.1 },
+  { msId: 'e18258ca-9999-11f1-0a80-1cef0037501a', name: 'Крокант', maker: 'КДВ', pack: 5.0, unit: 'кг', sale: 370.0, buy: 320.0, maxpct: 6.8 },
+  { msId: 'c3117b1f-90da-11f1-0a80-135900119e51', name: 'Ласточка', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 325.0, buy: 300.0, maxpct: 3.8 },
+  { msId: '80ceb8b2-9983-11f1-0a80-1a560036122e', name: 'Левушка', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 350.0, buy: 335.0, maxpct: 2.1 },
+  { msId: '648ab949-99cc-11f1-0a80-112000398ed7', name: 'Малена микс', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 350.0, buy: 315.0, maxpct: 5.0 },
+  { msId: 'cafc52fd-999a-11f1-0a80-15c400384310', name: 'Мама Женя', maker: 'АтАг', pack: 3.0, unit: 'кг', sale: 800.0, buy: 750.0, maxpct: 3.1 },
+  { msId: '14d202ad-9981-11f1-0a80-0e2b00354bee', name: 'Мама приехала', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 460.0, buy: 410.0, maxpct: 5.4 },
+  { msId: '5118eab6-9995-11f1-0a80-15c40037def3', name: 'Мартеллетто дыня клубника', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 360.0, buy: 310.0, maxpct: 6.9 },
+  { msId: '71cd7e5b-9995-11f1-0a80-02140037c5b8', name: 'Мартеллетто йогурт апель. чёрная смород.', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 360.0, buy: 290.0, maxpct: 9.7 },
+  { msId: '61701922-9982-11f1-0a80-021400365f6f', name: 'Маска', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 440.0, buy: 390.0, maxpct: 5.7 },
+  { msId: '443015b1-9977-11f1-0a80-1965003564f2', name: 'Мишка косолапый', maker: 'Красный Октябрь', pack: 4.0, unit: 'кг', sale: 760.0, buy: 700.0, maxpct: 3.9 },
+  { msId: '09783fe8-999b-11f1-0a80-18d10038e4c2', name: 'Мишка на севере', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 750.0, buy: 710.0, maxpct: 2.7 },
+  { msId: '19617db9-999e-11f1-0a80-15c40038a1ea', name: 'Морские', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 380.0, buy: 330.0, maxpct: 6.6 },
+  { msId: '65fb17b7-999a-11f1-0a80-196500382f76', name: 'Обыкновенное чудо', maker: 'Славянка', pack: 3.0, unit: 'кг', sale: 440.0, buy: 390.0, maxpct: 5.7 },
+  { msId: 'a4e2508d-9987-11f1-0a80-09f000363bd1', name: 'Огни Москвы', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: '81636ca8-9977-11f1-0a80-0e2b003467ff', name: 'Ореховая роща', maker: 'Красный Октябрь', pack: 3.0, unit: 'кг', sale: 620.0, buy: 590.0, maxpct: 2.4 },
+  { msId: '25d89b7c-90da-11f1-0a80-07b600124a19', name: 'Отломи Toffee', maker: 'Акконд', pack: 4.0, unit: 'кг', sale: 400.0, buy: 350.0, maxpct: 6.2 },
+  { msId: 'ffb48769-9982-11f1-0a80-11200036d30c', name: 'Отломи мини', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 375.0, buy: 355.0, maxpct: 2.7 },
+  { msId: 'cb246963-9986-11f1-0a80-16ae0036e370', name: 'Перезвон в ваф. крошке', maker: 'Славянка', pack: 4.0, unit: 'кг', sale: 530.0, buy: 485.0, maxpct: 4.2 },
+  { msId: 'e2b81d4e-999c-11f1-0a80-1fb6003834fd', name: 'Прохлада с кокосом', maker: 'Акконд', pack: 4.0, unit: 'кг', sale: 395.0, buy: 345.0, maxpct: 6.3 },
+  { msId: '29388cc0-90d7-11f1-0a80-115d001229a1', name: 'Птица дивная', maker: 'Акконд', pack: 4.0, unit: 'кг', sale: 540.0, buy: 515.0, maxpct: 2.3 },
+  { msId: 'afaedc92-999a-11f1-0a80-16ae00382bed', name: 'Птичка классическая', maker: 'Славянка', pack: 5.0, unit: 'кг', sale: 440.0, buy: 415.0, maxpct: 2.8 },
+  { msId: 'aaa6631b-90dc-11f1-0a80-07b60012b737', name: 'Птичье молоко капучино', maker: 'Рот Фронт', pack: 4.0, unit: 'кг', sale: 520.0, buy: 470.0, maxpct: 4.8 },
+  { msId: '95620b20-90ec-11f1-0a80-18be0014590c', name: 'Птичье молоко слив. ван. укрупненное', maker: 'Рот Фронт', pack: 4.0, unit: 'кг', sale: 520.0, buy: 470.0, maxpct: 4.8 },
+  { msId: '7fefd67e-90dc-11f1-0a80-0e7200135370', name: 'Птичье молоко слив. ванил.', maker: 'Рот Фронт', pack: 3.0, unit: 'кг', sale: 530.0, buy: 480.0, maxpct: 4.7 },
+  { msId: '21d5715a-90e3-11f1-0a80-18be001397ca', name: 'Ромашки', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 420.0, buy: 370.0, maxpct: 6.0 },
+  { msId: 'd7247cfa-99c9-11f1-0a80-0e2b0038688b', name: 'Северная Аврора', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 370.0, buy: 320.0, maxpct: 6.8 },
+  { msId: 'd4315b0a-90df-11f1-0a80-135900123a54', name: 'Семейка сов', maker: 'Рот Фронт', pack: 2.0, unit: 'кг', sale: 440.0, buy: 390.0, maxpct: 5.7 },
+  { msId: '3e7f4861-9983-11f1-0a80-1fb600366a25', name: 'Сладкое созвучие ассорти 4 вкуса', maker: 'Славянка', pack: 4.0, unit: 'кг', sale: 320.0, buy: 280.0, maxpct: 6.2 },
+  { msId: 'a53f114f-9994-11f1-0a80-1a5600377b4d', name: 'Степ десерт с печеньем', maker: 'Славянка', pack: 5.0, unit: 'кг', sale: 340.0, buy: 285.0, maxpct: 8.1 },
+  { msId: 'd02cb4bc-9983-11f1-0a80-16ae0036a311', name: 'Степ микс', maker: 'Славянка', pack: 5.0, unit: 'кг', sale: 390.0, buy: 340.0, maxpct: 6.4 },
+  { msId: '40f5329c-9976-11f1-0a80-0e2b00344886', name: 'Столичные', maker: 'Красный Октябрь', pack: 4.0, unit: 'кг', sale: 970.0, buy: 900.0, maxpct: 3.6 },
+  { msId: 'fb12d8bf-9983-11f1-0a80-16ae0036a5e5', name: 'СуперСтеп', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 370.0, buy: 320.0, maxpct: 6.8 },
+  { msId: 'ea69326d-9994-11f1-0a80-0e2b0036caf8', name: 'Трамвайчик с арахисом', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 380.0, buy: 330.0, maxpct: 6.6 },
+  { msId: 'deb28a1c-999d-11f1-0a80-0e2b00374906', name: 'Трюфель Особый', maker: 'Славянка', pack: 4.0, unit: 'кг', sale: 940.0, buy: 890.0, maxpct: 2.7 },
+  { msId: '85869d8b-9982-11f1-0a80-1a5600360291', name: 'Фонарики', maker: 'Рот Фронт', pack: 2.0, unit: 'кг', sale: 460.0, buy: 420.0, maxpct: 4.3 },
+  { msId: '5f12b480-999b-11f1-0a80-16ae00383ab0', name: 'Фрутландия апельсины и лимоны', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 300.0, buy: 250.0, maxpct: 8.3 },
+  { msId: '6849e299-999b-11f1-0a80-16ae00383b07', name: 'Фрутландия манго', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 300.0, buy: 250.0, maxpct: 8.3 },
+  { msId: 'c1f84583-9977-11f1-0a80-05be0033e726', name: 'Халва в шоколаде', maker: 'Рот Фронт', pack: 5.0, unit: 'кг', sale: 550.0, buy: 500.0, maxpct: 4.5 },
+  { msId: '125b9398-90de-11f1-0a80-115d001329de', name: 'Халва в шоколаде мини', maker: 'Рот Фронт', pack: 4.0, unit: 'кг', sale: 405.0, buy: 355.0, maxpct: 6.2 },
+  { msId: '0a6ec8e2-9987-11f1-0a80-1cef00361302', name: 'Хуторок', maker: 'Акконд', pack: 3.0, unit: 'кг', sale: 350.0, buy: 335.0, maxpct: 2.1 },
+  { msId: '43041ac5-90dd-11f1-0a80-13590011ec30', name: 'Царское лакомство', maker: 'Славянка', pack: 4.0, unit: 'кг', sale: 660.0, buy: 620.0, maxpct: 3.0 },
+  { msId: '62097a60-90e3-11f1-0a80-0e7200140392', name: 'Цитрон', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 310.0, buy: 270.0, maxpct: 6.5 },
+  { msId: '6e04a2ca-90db-11f1-0a80-15fa00127a16', name: 'Черноморочка', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 380.0, buy: 345.0, maxpct: 4.6 },
+  { msId: '16f10c11-9982-11f1-0a80-196500367bec', name: 'Шоколадный крем', maker: 'Красный Октябрь', pack: 3.0, unit: 'кг', sale: 890.0, buy: 840.0, maxpct: 2.8 },
+  { msId: '0c2a0057-999a-11f1-0a80-05be0036d109', name: 'Эли молочные', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: '16613044-999a-11f1-0a80-0e2b003710fd', name: 'Эли шоколадные', maker: 'Славянка', pack: 6.0, unit: 'кг', sale: 600.0, buy: 550.0, maxpct: 4.2 },
+  { msId: '2753903f-999b-11f1-0a80-021400381cf9', name: 'Южная ночь', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 440.0, buy: 390.0, maxpct: 5.7 },
+  { msId: 'd71722fc-90d9-11f1-0a80-18be00126e71', name: 'Отломи вафельные', maker: 'Акконд', pack: 4.0, unit: 'кг', sale: 440.0, buy: 420.0, maxpct: 2.3 },
+  { msId: '34152a10-99ca-11f1-0a80-021400393dd3', name: 'Желейные апельсин', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 350.0, buy: 320.0, maxpct: 4.3 },
+  { msId: '0972fb62-99ca-11f1-0a80-0e2b003868e8', name: 'Желейные барбарис', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 350.0, buy: 320.0, maxpct: 4.3 },
+  { msId: '2c83f215-99cb-11f1-0a80-1cef0038a023', name: 'Живинка желейные ассорти', maker: 'Красный Октябрь', pack: 8.0, unit: 'кг', sale: 300.0, buy: 250.0, maxpct: 8.3 },
+  { msId: '2477bc7e-99ca-11f1-0a80-1120003986aa', name: 'Желейные клубника со сливками', maker: 'Красный Октябрь', pack: 5.0, unit: 'кг', sale: 350.0, buy: 320.0, maxpct: 4.3 },
+  { msId: '7883cbe7-90ef-11f1-0a80-0e720014d2f7', name: 'Кис-Кис с арахисом', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 380.0, buy: 335.0, maxpct: 5.9 },
+  { msId: '76255b1f-90e2-11f1-0a80-06ce00133fff', name: 'Золотой ключик с ирисом', maker: 'Красный Октябрь', pack: 6.0, unit: 'кг', sale: 300.0, buy: 240.0, maxpct: 10.0 },
+  { msId: 'ccd6f3c5-90d8-11f1-0a80-143f0012c6e8', name: 'Кис-Кис с ирисом', maker: 'Красный Октябрь', pack: 7.0, unit: 'кг', sale: 290.0, buy: 250.0, maxpct: 6.9 },
+  { msId: '31368927-90d8-11f1-0a80-115d00125303', name: 'Крепыш с ирисом', maker: 'Красный Октябрь', pack: 3.0, unit: 'кг', sale: 380.0, buy: 340.0, maxpct: 5.3 },
+  { msId: '58352d39-9981-11f1-0a80-0056003799e6', name: 'Тёмный шоколад Бабаевский Люкс 75г', maker: 'Бабаевский', pack: 18, unit: 'шт.', sale: 90.0, buy: 70.0, maxpct: 11.1 },
+];
+const DRINK_COLORS = { 'Coca-Cola': '#E30613', 'Fanta': '#F5871F', 'Sprite': '#2E9E4C', 'Pepsi': '#1E4C9A' };
+// Drink names end with a country-of-import abbreviation (IR, GR, AZ, UZB, KZ).
+// splitOrigin() pulls that off into its own field so it can render as a
+// separate badge instead of sitting inside the product name text.
+const COUNTRY_NAMES = { IR: 'Ирак', GR: 'Грузия', AZ: 'Азербайджан', UZB: 'Узбекистан', KZ: 'Казахстан' };
+function splitOrigin(name) {
+  const parts = name.trim().split(' ');
+  const last = parts[parts.length - 1];
+  if (COUNTRY_NAMES[last]) return { name: parts.slice(0, -1).join(' '), origin: COUNTRY_NAMES[last] };
+  return { name, origin: null };
+}
+const STEPPER_COLOR = DRINK_COLORS['Sprite']; // +/- buttons use this accent everywhere, not the per-item brand color
+const STEPPER_COLOR_DARK = '#1B7A38'; // darker shade for gradients built on the accent
+const CANDY_COLORS = {
+  'Рот Фронт': '#A6334F', 'Красный Октябрь': '#7B2D8E', 'Бабаевский': '#5A3A22',
+  'Акконд': '#B5651D', 'Славянка': '#2E7D32', 'АтАг': '#146356', 'Конти': '#C2451A',
+  'Mars': '#8C1D1D', 'Confectum': '#C77D2E', 'КДВ': '#7A5C1E', 'Mieszko': '#9A3B5C', 'Прочие': '#8A6D3B',
+};
+
+// Discount ladder keyed by number of packs/boxes ordered — never exceeds an item's
+// own margin cap, so price per unit can't drop below 50% of the base (sale − buy) margin.
+const TIER_BREAKS = [
+  { min: 1, pct: 0 },
+  { min: 5, pct: 3.3 },
+  { min: 10, pct: 6.7 },
+  { min: 20, pct: 10 },
+];
+
+// Manually-priced duplicate listings (same drink, no "AZ" label) — appended after
+// the main catalog so existing product ids / image filenames never shift.
+const DRINKS_DUPLICATES = [
+  { msId: '6b28b228-a270-11f1-0a80-1daa000343a8', name: 'Coca-Cola 2л', brand: 'Coca-Cola', pack: 6, sale: 120.0, buy: 50.0, maxpct: 29.2, dup: true, imgSrc: 'images/5.jpg', origin: 'Грузия' },
+  { msId: '76717f27-a270-11f1-0a80-105100034f71', name: 'Coca-Cola 1л', brand: 'Coca-Cola', pack: 9, sale: 70.0, buy: 35.0, maxpct: 25.0, dup: true, imgSrc: 'images/4.jpg', origin: 'Грузия' },
+];
+
+let _id = 1;
+const PRODUCTS = [
+  ...DRINKS_DATA.map((d) => {
+    const { name, origin } = splitOrigin(d.name);
+    return {
+      id: _id++, cat: d.brand, group: 'Напитки', name, origin, unit: 'бут.',
+      pack: d.pack, sale: d.sale, buy: d.buy, maxpct: d.maxpct, color: DRINK_COLORS[d.brand],
+      msId: d.msId,
+    };
+  }),
+  ...CANDY_DATA.map((c) => ({
+    id: _id++, cat: 'Конфеты', group: 'Конфеты', name: c.name, maker: c.maker, unit: c.unit,
+    pack: c.pack, sale: c.sale, buy: c.buy, maxpct: c.maxpct, color: CANDY_COLORS[c.maker] || '#8A6D3B',
+    msId: c.msId,
+  })),
+].map((p) => ({ ...p, img: `images/${p.id}.jpg` }))
+  .concat(DRINKS_DUPLICATES.map((d) => ({
+    id: _id++, cat: d.brand, group: 'Напитки', name: d.name, unit: 'бут.',
+    pack: d.pack, sale: d.sale, buy: d.buy, maxpct: d.maxpct, color: DRINK_COLORS[d.brand],
+    dup: d.dup, img: d.imgSrc, msId: d.msId, origin: d.origin,
+  })));
+
+const TABS = ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi', 'Конфеты'];
+
+// ---------- МойСклад sync ----------
+// The API user behind this token has ONLY rights to view products/counterparties/
+// stores/organizations and to create customer orders — nothing else (see project
+// notes). Losing this string still can't expose finances, reports, or other data.
+const MOYSKLAD_AUTH = 'Basic aGVybWVzLWFwaUB1cnVtZXJ1czptMWxhbjJvbzE=';
+const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
+const MOYSKLAD_ORG_ID = '774df1ec-302d-11f1-0a80-0782001ca5f8'; // ТД ГЕРМЕС
+const MOYSKLAD_STORE_ID = '774f50d5-302d-11f1-0a80-0782001ca5fb'; // ТД ГЕРМЕС
+
+function msHeaders() {
+  return {
+    'Authorization': MOYSKLAD_AUTH,
+    'Content-Type': 'application/json',
+    'Accept-Encoding': 'gzip',
+  };
+}
+
+// Finds an existing МойСклад counterparty (contractor) by exact store name, or
+// creates a new one if none matches — so repeat orders from the same shop reuse
+// the same contractor record instead of duplicating it every time.
+async function findOrCreateCounterparty(storeName) {
+  const searchUrl = `${MOYSKLAD_API}/entity/counterparty?filter=name=${encodeURIComponent(storeName)}`;
+  const searchRes = await fetch(searchUrl, { headers: msHeaders() });
+  if (!searchRes.ok) throw new Error(`Поиск магазина: ${searchRes.status}`);
+  const searchData = await searchRes.json();
+  if (searchData.rows && searchData.rows.length > 0) {
+    return searchData.rows[0].meta.href;
+  }
+  const createRes = await fetch(`${MOYSKLAD_API}/entity/counterparty`, {
+    method: 'POST',
+    headers: msHeaders(),
+    body: JSON.stringify({ name: storeName }),
+  });
+  if (!createRes.ok) throw new Error(`Создание магазина: ${createRes.status}`);
+  const created = await createRes.json();
+  return created.meta.href;
+}
+
+// Pulls current stock quantities for the configured store from МойСклад's
+// "report/stock/all" endpoint and returns a map of product id -> quantity.
+// Only called for drinks (see project notes — candy stock isn't tracked this
+// way yet). Any failure here should never block ordering, so callers treat a
+// thrown error as "unknown stock" rather than "out of stock".
+async function fetchStockLevels() {
+  const storeHref = `${MOYSKLAD_API}/entity/store/${MOYSKLAD_STORE_ID}`;
+  const url = `${MOYSKLAD_API}/report/stock/all?filter=store=${encodeURIComponent(storeHref)}&limit=1000`;
+  const res = await fetch(url, { headers: msHeaders() });
+  if (!res.ok) throw new Error(`Остатки: ${res.status}`);
+  const data = await res.json();
+  const map = {};
+  (data.rows || []).forEach((r) => {
+    const href = r.assortment && r.assortment.meta && r.assortment.meta.href;
+    if (!href) return;
+    const id = href.split('/').pop();
+    map[id] = typeof r.quantity === 'number' ? r.quantity : 0;
+  });
+  return map;
+}
+
+// Company-wide "hits" — computed from real order history across ALL sales
+// reps in МойСклад (not just this tablet's local history). Requires the
+// service role's customerorder rights to include view: ALL (see project
+// notes — deliberately widened just for this one read, nothing else).
+// Looks at the most recent ~300 orders (bounded for speed) and ranks: top 2
+// per drink brand tab, top 30 for candy. Any failure leaves the hit set
+// empty — no badges shown, nothing else breaks.
+async function fetchGlobalHitMsIds() {
+  const counts = {}; // msId -> total quantity ordered across recent history
+  const pageSize = 100;
+  const maxPages = 3;
+  for (let page = 0; page < maxPages; page++) {
+    const url = `${MOYSKLAD_API}/entity/customerorder?limit=${pageSize}&offset=${page * pageSize}&expand=positions&order=moment,desc`;
+    const res = await fetch(url, { headers: msHeaders() });
+    if (!res.ok) throw new Error(`История заказов: ${res.status}`);
+    const data = await res.json();
+    const rows = data.rows || [];
+    for (const order of rows) {
+      const positions = (order.positions && order.positions.rows) || [];
+      for (const pos of positions) {
+        const href = pos.assortment && pos.assortment.meta && pos.assortment.meta.href;
+        if (!href) continue;
+        const id = href.split('/').pop();
+        counts[id] = (counts[id] || 0) + (typeof pos.quantity === 'number' ? pos.quantity : 0);
+      }
+    }
+    if (rows.length < pageSize) break; // reached the end of history
+  }
+
+  const countFor = (msId) => counts[msId] || 0;
+  const hitSet = new Set();
+
+  ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi'].forEach((brand) => {
+    const brandItems = PRODUCTS.filter((p) => p.cat === brand && !p.dup && p.msId);
+    brandItems.sort((a, b) => countFor(b.msId) - countFor(a.msId));
+    brandItems.slice(0, 2).forEach((p) => { if (countFor(p.msId) > 0) hitSet.add(p.msId); });
+  });
+
+  const candyItems = PRODUCTS.filter((p) => p.cat === 'Конфеты' && p.msId);
+  candyItems.sort((a, b) => countFor(b.msId) - countFor(a.msId));
+  candyItems.slice(0, 30).forEach((p) => { if (countFor(p.msId) > 0) hitSet.add(p.msId); });
+
+  return hitSet;
+}
+
+// Builds and sends the "Заказ покупателя" document. Throws on any failure —
+// the caller decides how to surface that (order still saves locally either way).
+async function syncOrderToMoySklad(order) {
+  const missingIds = order.items.filter((i) => !i.msId);
+  if (missingIds.length > 0) {
+    throw new Error(`Нет связи с МойСклад для: ${missingIds.map((i) => i.name).join(', ')}`);
+  }
+
+  const agentHref = order.counterpartyHref || await findOrCreateCounterparty(order.store);
+
+  const positions = order.items.map((i) => ({
+    quantity: i.totalUnits,
+    price: Math.round(i.unitPrice * 100),
+    assortment: {
+      meta: {
+        href: `${MOYSKLAD_API}/entity/product/${i.msId}`,
+        type: 'product',
+        mediaType: 'application/json',
+      },
+    },
+  }));
+
+  const body = {
+    organization: { meta: { href: `${MOYSKLAD_API}/entity/organization/${MOYSKLAD_ORG_ID}`, type: 'organization', mediaType: 'application/json' } },
+    agent: { meta: { href: agentHref, type: 'counterparty', mediaType: 'application/json' } },
+    store: { meta: { href: `${MOYSKLAD_API}/entity/store/${MOYSKLAD_STORE_ID}`, type: 'store', mediaType: 'application/json' } },
+    // Rep name goes into the plain "description" (comment) field on the
+    // МойСклад order — no custom attribute setup needed on their side, and
+    // it's visible right on the order card.
+    description: 'Заказ оформлен через веб-версию (магазин самостоятельно)',
+    positions,
+  };
+
+  const res = await fetch(`${MOYSKLAD_API}/entity/customerorder`, {
+    method: 'POST',
+    headers: msHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`МойСклад ${res.status}: ${errText.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+// Live prices — refreshed from МойСклад on every launch so a price or cost
+// change there shows up in the app without reinstalling anything. The same
+// halving-the-margin rule the bundled maxpct values above were computed
+// with by hand is applied here automatically: buy=0 means the cost hasn't
+// been entered in МойСклад yet, so no discount is offered rather than a
+// false 50%. On failure (offline, blocked) callers keep whatever prices
+// they already had — bundled defaults on first-ever launch, or the last
+// successfully synced set after that (cached in localStorage).
+function computeMaxpct(sale, buy) {
+  if (!buy || buy <= 0 || !sale || sale <= 0) return 0;
+  const marginPct = ((sale - buy) / sale) * 100;
+  return Math.round((marginPct / 2) * 10) / 10;
+}
+async function fetchLivePrices(msIds) {
+  if (msIds.length === 0) return {};
+  const idFilters = msIds.map((id) => `filter=id=${id}`).join('&');
+  const url = `${MOYSKLAD_API}/entity/product?${idFilters}&limit=1000`;
+  const res = await fetch(url, { headers: msHeaders() });
+  if (!res.ok) throw new Error(`Цены: ${res.status}`);
+  const data = await res.json();
+  const map = {};
+  (data.rows || []).forEach((p) => {
+    const saleEntry = p.salePrices && p.salePrices[0];
+    if (!saleEntry) return;
+    const sale = saleEntry.value / 100;
+    const buy = (p.buyPrice && p.buyPrice.value) ? p.buyPrice.value / 100 : 0;
+    map[p.id] = { sale, buy, maxpct: computeMaxpct(sale, buy) };
+  });
+  return map;
+}
+
+function tiersFor(item) {
+  return TIER_BREAKS.map((t) => ({ min: t.min, pct: Math.min(t.pct, item.maxpct) }));
+}
+function tierAt(item, packs) {
+  const tiers = tiersFor(item);
+  return [...tiers].reverse().find((t) => packs >= t.min) || tiers[0];
+}
+function nextTier(item, packs) {
+  const tiers = tiersFor(item);
+  return tiers.find((t) => t.min > packs && t.pct > tierAt(item, packs).pct);
+}
+function unitPriceAt(item, packs) {
+  const pct = tierAt(item, packs).pct;
+  return Math.round(item.sale * (1 - pct / 100) * 100) / 100;
+}
+function money(n) {
+  return Math.round(n).toLocaleString('ru-RU') + '₽';
+}
+// Progress toward the next discount tier, as a fraction 0..1 of the way from the
+// previous tier's threshold to the next one — feeds the little filling bar in each card.
+function tierProgress(item, packs) {
+  const tiers = tiersFor(item);
+  const cur = tierAt(item, packs);
+  const nt = nextTier(item, packs);
+  if (!nt) return 1;
+  const curMin = cur.min || 0;
+  const span = nt.min - curMin;
+  return span > 0 ? Math.max(0, Math.min(1, (packs - curMin) / span)) : 0;
+}
+// Same tier ladder, but for the shared candy pool as a whole (ignores any single
+// item's margin cap — this is just "how many boxes has the order reached").
+function candyTierAt(qty) {
+  return [...TIER_BREAKS].reverse().find((t) => qty >= t.min) || TIER_BREAKS[0];
+}
+function candyNextTier(qty) {
+  return TIER_BREAKS.find((t) => t.min > qty);
+}
+function fmt(n) {
+  return Number.isInteger(n) ? n : n.toFixed(1).replace(/\.0$/, '');
+}
+
+// Purely visual loyalty tiers based on how many past orders this store has in
+// the tablet's local history — no money changes hands, so it carries none of
+// the balance-tracking risk a real cashback ledger would (see project notes).
+// Solid flat colors, no light halo backgrounds — matches the ДУБЛЬ/discount
+// badges already in the app instead of introducing a new visual language.
+function customerTier(orderCount) {
+  if (orderCount >= 7) return { label: 'VIP-КЛИЕНТ', gradient: 'linear-gradient(135deg, #E4C158, #B8860B)', border: '#8A6508' };
+  if (orderCount >= 3) return { label: 'ПОСТОЯННЫЙ КЛИЕНТ', gradient: 'linear-gradient(135deg, #2E7D32, #1B5E20)', border: '#154A18' };
+  return null; // first couple of orders — no badge yet, nothing to celebrate
+}
+
+function countStoreOrders(history, storeName) {
+  const norm = (s) => (s || '').trim().toLowerCase();
+  return history.filter((o) => norm(o.store) === norm(storeName)).length;
+}
+
+// Recreates a price-sticker badge with CSS (no external image assets)
+function ProductPlaceholder({ p }) {
+  if (p.group === 'Напитки') {
+    const isCan = p.name.includes('ж/б');
+    return (
+      <svg viewBox="0 0 100 140" width="100%" height="100%">
+        {isCan ? (
+          <rect x="30" y="15" width="40" height="110" rx="8" fill={p.color} />
+        ) : (
+          <path d="M40 10 h20 v14 c10 6 12 14 12 24 v70 a8 8 0 0 1 -8 8 h-28 a8 8 0 0 1 -8 -8 v-70 c0 -10 2 -18 12 -24 z" fill={p.color} />
+        )}
+        <rect x="26" y="55" width="48" height="26" rx="3" fill="#fff" opacity="0.92" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      <path d="M20 50 L34 38 L34 62 Z" fill={p.color} opacity="0.85" />
+      <path d="M80 50 L66 38 L66 62 Z" fill={p.color} opacity="0.85" />
+      <rect x="32" y="34" width="36" height="32" rx="6" fill={p.color} />
+    </svg>
+  );
+}
+
+// Tries the real photo at images/{id}.jpg first; if it's missing (404), falls
+// back to the colored silhouette automatically — nothing breaks either way.
+// Shows a soft shimmer placeholder while the image is still loading in.
+function ProductArt({ p }) {
+  const [photoFailed, setPhotoFailed] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+  if (photoFailed) return <ProductPlaceholder p={p} />;
+  return (
+    <>
+      {!loaded && <div className="hermes-shimmer" style={{ position: 'absolute', inset: 6, borderRadius: 10 }} />}
+      <img
+        src={p.img}
+        alt={p.name}
+        onError={() => setPhotoFailed(true)}
+        onLoad={() => setLoaded(true)}
+        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'absolute', inset: 0, opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease' }}
+      />
+    </>
+  );
+}
+
+// Tries the real logo at images/logo.png first (you provide this file); falls back
+// to the simple text mark automatically if it's missing — same pattern as product photos.
+function Logo() {
+  const [logoFailed, setLogoFailed] = React.useState(false);
+  if (!logoFailed) {
+    return (
+      <img
+        src="images/logo.png"
+        alt="Гермес"
+        onError={() => setLogoFailed(true)}
+        style={{ height: 120, objectFit: 'contain' }}
+      />
+    );
+  }
+  return (
+    <>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" strokeWidth="1.6"><path d="M4 20 L10 4 L14 4 L20 20 M7 13 L17 13" /></svg>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 18, fontWeight: 900, color: '#1B5E20', letterSpacing: 1 }}>ГЕРМЕС</div>
+        <div style={{ fontSize: 9, color: '#1B5E20', letterSpacing: 2, marginTop: -2 }}>ТОРГОВЫЙ ДОМ</div>
+      </div>
+    </>
+  );
+}
+
+// One catalog card. Wrapped in React.memo further below so a card only re-renders
+// when its own computed props actually changed.
+function ProductCardInner({ p, packs, tierQty, unitPrice, nt, discounted, setPacks, isHit, outOfStock }) {
+  const pct = tierAt(p, tierQty).pct;
+  const savingsPerPack = discounted ? Math.round((p.sale - unitPrice) * p.pack) : 0;
+
+  return (
+    <div
+      className="hermes-card"
+      style={{ borderRadius: 18, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}
+    >
+      <div style={{ position: 'relative', height: 92, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isHit && (
+          <span style={{
+            position: 'absolute', top: -6, left: -6, fontSize: 10, fontWeight: 900, color: '#fff',
+            background: 'linear-gradient(135deg, #FF5A1F, #E8380D)', borderRadius: 8, padding: '4px 8px',
+            boxShadow: '0 4px 12px rgba(232,56,13,0.55)', zIndex: 2, letterSpacing: 0.3,
+          }}>
+            🔥 ХИТ
+          </span>
+        )}
+        <div style={{ width: p.group === 'Напитки' ? 56 : 76, height: 82 }}><ProductArt p={p} /></div>
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.25, minHeight: 32 }}>
+        {p.name}
+        {p.dup && (
+          <span style={{ marginLeft: 6, fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#E8720F', borderRadius: 5, padding: '2px 5px', verticalAlign: 'middle', letterSpacing: 0.3 }}>
+            ДУБЛЬ
+          </span>
+        )}
+      </div>
+      {p.origin && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: -2 }}>
+          <FlagIcon country={p.origin} size={11} />
+          <span style={{ fontSize: 9, fontWeight: 800, color: '#8A7654', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            {p.origin}
+          </span>
+        </div>
+      )}
+      <div style={{ fontSize: 11, color: '#8A8677' }}>
+        {p.group === 'Напитки' ? `уп. ${p.pack} бут.` : `кор. ${fmt(p.pack)} ${p.unit}`}
+      </div>
+
+      {/* The discount price/badge stay mounted at all times (just display:none'd) instead
+          of being conditionally added/removed from the DOM — with ~110 candy cards, a
+          shared discount tier turns on for all of them at once, and creating ~220 new DOM
+          nodes in one React commit is what caused the stutter right at a threshold.
+          Toggling display on already-mounted nodes is far cheaper than mounting them. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 25.5, fontWeight: 800, color: '#1B5E20' }}>{money(unitPrice)}</span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#B0AEA4', textDecoration: 'line-through', textDecorationThickness: 1.5, display: discounted ? 'inline' : 'none' }}>{money(p.sale)}</span>
+        <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#1B5E20', borderRadius: 999, padding: '3px 9px', display: discounted ? 'inline-block' : 'none' }}>
+          −{pct || 1}%
+        </span>
+        <span style={{ fontSize: 10.5, color: '#8A8677' }}>/ {p.unit}</span>
+      </div>
+      <div style={{ fontSize: 10.5, color: '#57B86E', fontWeight: 700, marginTop: -4, display: discounted && savingsPerPack > 0 ? 'block' : 'none' }}>
+        выгода {money(savingsPerPack || 1)} {p.group === 'Напитки' ? 'на уп.' : 'на кор.'}
+      </div>
+
+      {p.group === 'Напитки' && (
+        nt ? (() => {
+          const remaining = nt.min - tierQty;
+          const almostThere = remaining === 1;
+          return (
+            <div>
+              <div style={{ fontSize: almostThere ? 11 : 10.5, color: almostThere ? '#E8720F' : '#57B86E', fontWeight: 700, marginBottom: 4 }}>
+                {almostThere ? (
+                  <span className="hermes-pulse">ещё <span style={{ color: '#E8720F', fontWeight: 900 }}>1 уп.</span> — и скидка ваша!</span>
+                ) : (
+                  <>ещё <span style={{ color: '#1B5E20', fontWeight: 800 }}>{remaining} уп.</span> до скидки</>
+                )}
+              </div>
+              <div style={{ height: 3, borderRadius: 2, background: '#EDEDE8', overflow: 'hidden' }}>
+                <div className="hermes-tier-fill" style={{ height: '100%', width: `${tierProgress(p, tierQty) * 100}%`, borderRadius: 2, background: almostThere ? '#E8720F' : '#57B86E' }} />
+              </div>
+            </div>
+          );
+        })() : pct > 0 && tierQty >= TIER_BREAKS[TIER_BREAKS.length - 1].min ? (
+          <div style={{ fontSize: 10, color: '#8A8677', fontWeight: 600 }}>
+            <span style={{ color: '#1B5E20', fontWeight: 800 }}>−{pct}%</span> максимальная скидка
+          </div>
+        ) : <div style={{ height: 13 }} />
+      )}
+      {p.group === 'Конфеты' && <div style={{ height: 13 }} />}
+
+      {outOfStock ? (
+        <div style={{ marginTop: 'auto', padding: '10px 4px', textAlign: 'center' }}>
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: '#C1440E', textTransform: 'uppercase', letterSpacing: 0.4 }}>Закончился</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#B0752E', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>скоро будет в наличии</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 'auto', padding: '4px 0' }}>
+          <button
+            onClick={() => setPacks(p.id, Math.max(0, packs - 1))}
+            style={{
+              width: 42, height: 42, borderRadius: 999, border: `1.5px solid ${STEPPER_COLOR}33`,
+              background: `${STEPPER_COLOR}14`, color: STEPPER_COLOR, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'transform 0.1s',
+            }}
+          ><Minus size={19} /></button>
+          <span key={packs} className="hermes-bounce" style={{ color: '#1A1A1A', fontSize: 19, fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: -0.2, fontVariantNumeric: 'tabular-nums', minWidth: 22, textAlign: 'center' }}>{packs}</span>
+          <button
+            onClick={() => setPacks(p.id, packs + 1)}
+            style={{
+              width: 42, height: 42, borderRadius: 999, border: 'none',
+              background: STEPPER_COLOR, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: `0 3px 10px ${STEPPER_COLOR}55`, transition: 'transform 0.1s',
+            }}
+          ><Plus size={19} /></button>
+        </div>
+      )}
+    </div>
+  );
+}
+const ProductCard = React.memo(ProductCardInner);
+
+
+
+function HermesOrderApp() {
+  const [cart, setCart] = useState({}); // id -> packs ordered
+  const [tab, setTab] = useState('Coca-Cola');
+  const [showSummary, setShowSummary] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [storeName, setStoreName] = useState(() => {
+    try { return localStorage.getItem('hermes_web_store_name') || ''; } catch (e) { return ''; }
+  });
+  const [storeNameError, setStoreNameError] = useState(false);
+  const [storeSuggestions, setStoreSuggestions] = useState([]);
+  const [showStoreSuggestions, setShowStoreSuggestions] = useState(false);
+  const [selectedCounterparty, setSelectedCounterparty] = useState(null); // { href, name } | null
+  const storeSearchTimer = React.useRef(null);
+  const [history, setHistory] = useState([]); // local order log — not a browsable page here, just backs the loyalty badge + failed-order retry queue
+  const [saveError, setSaveError] = useState(false);
+  const [showCandyHint, setShowCandyHint] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'ok' | 'error'
+  const [syncErrorMsg, setSyncErrorMsg] = useState('');
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [stockByMsId, setStockByMsId] = useState({}); // {msId: quantity} for drinks only — empty means "not loaded yet", never treated as out of stock
+  const [scrolled, setScrolled] = useState(false); // true once the page has scrolled a few px — adds a shadow under the sticky header
+  // Public web version: no rep concept at all — this link is sent straight
+  // to a shop's chat, and the shop owner fills the order in themselves.
+  // Instead the shop's own name is captured once, up front, before the
+  // catalog appears at all — see the gate screen below. Persisted per
+  // browser so reopening the same link later doesn't ask again.
+  const [storeConfirmed, setStoreConfirmed] = useState(() => {
+    try { return !!localStorage.getItem('hermes_web_store_name'); } catch (e) { return false; }
+  });
+  const changeStore = () => {
+    try { localStorage.removeItem('hermes_web_store_name'); } catch (e) {}
+    setStoreConfirmed(false);
+    setStoreName('');
+    setSelectedCounterparty(null);
+  };
+  const confirmStoreGate = () => {
+    if (!storeName.trim()) { setStoreNameError(true); return; }
+    try { localStorage.setItem('hermes_web_store_name', storeName.trim()); } catch (e) {}
+    setStoreConfirmed(true);
+  };
+
+  // Cached prices load instantly (no flash of bundled prices while waiting
+  // on the network); a fresh fetch on every launch then overwrites them if
+  // it succeeds. See fetchLivePrices above for the fallback behavior.
+  const [livePrices, setLivePrices] = useState(() => {
+    try {
+      const raw = localStorage.getItem('hermes_live_prices');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  });
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const msIds = PRODUCTS.filter((p) => p.msId).map((p) => p.msId);
+        const prices = await fetchLivePrices(msIds);
+        if (Object.keys(prices).length > 0) {
+          setLivePrices(prices);
+          try { localStorage.setItem('hermes_live_prices', JSON.stringify(prices)); } catch (e) {}
+        }
+      } catch (e) { /* offline or blocked — keep last known/bundled prices */ }
+    })();
+  }, []);
+  // Overlays live sale/buy/maxpct on top of the bundled catalog — everything
+  // else about a product (tab, image, pack size, name) still comes from code.
+  const LIVE_PRODUCTS = useMemo(() => PRODUCTS.map((p) => {
+    const lp = p.msId && livePrices[p.msId];
+    return lp ? { ...p, sale: lp.sale, buy: lp.buy, maxpct: lp.maxpct } : p;
+  }), [livePrices]);
+
+  const setPacks = React.useCallback((id, packs) => setCart((c) => {
+    const n = { ...c };
+    if (packs <= 0) delete n[id]; else n[id] = packs;
+    return n;
+  }), []);
+
+  React.useEffect(() => {
+    if (tab === 'Конфеты') {
+      try {
+        if (!localStorage.getItem('hermes_candy_hint_seen')) {
+          setShowCandyHint(true);
+          localStorage.setItem('hermes_candy_hint_seen', '1');
+        }
+      } catch (e) {}
+    }
+  }, [tab]);
+
+  // Candy discount is pooled: the tier is driven by the total number of candy
+  // boxes across ALL candy positions in the cart, not by any one position alone.
+  const totalCandyPacksInCart = useMemo(() => Object.entries(cart).reduce((s, [id, qty]) => {
+    const prod = LIVE_PRODUCTS.find((pp) => pp.id === Number(id));
+    return prod && prod.group === 'Конфеты' ? s + qty : s;
+  }, 0), [cart, LIVE_PRODUCTS]);
+
+  const items = useMemo(() => Object.entries(cart).map(([id, packs]) => {
+    const p = LIVE_PRODUCTS.find((p) => p.id === Number(id));
+    const tierQty = p.group === 'Конфеты' ? totalCandyPacksInCart : packs;
+    const unitPrice = unitPriceAt(p, tierQty);
+    const totalUnits = packs * p.pack;
+    return { ...p, packs, tierQty, unitPrice, totalUnits, lineTotal: Math.round(unitPrice * totalUnits) };
+  }), [cart, totalCandyPacksInCart, LIVE_PRODUCTS]);
+
+  const totalPacks = items.reduce((s, i) => s + i.packs, 0);
+  const totalSum = items.reduce((s, i) => s + i.lineTotal, 0);
+  const totalSaved = items.reduce((s, i) => s + Math.round((i.sale - i.unitPrice) * i.totalUnits), 0);
+  // "Peak moment" — the order hit the top discount tier on something (candy pool
+  // or any single drink). Worth celebrating harder than an ordinary small order —
+  // this is the moment people actually remember afterward (peak-end rule).
+  const maxTierReached = TIER_BREAKS[TIER_BREAKS.length - 1].min;
+  const reachedMaxDiscount = totalCandyPacksInCart >= maxTierReached || items.some((i) => i.group === 'Напитки' && i.packs >= maxTierReached);
+
+  // Company-wide "hits" — fetched once from МойСклад's own order history
+  // (see fetchGlobalHitMsIds), not from this tablet's local history. Empty
+  // until the fetch resolves; stays empty forever if it fails, same
+  // best-effort pattern as the stock check.
+  const [globalHitMsIds, setGlobalHitMsIds] = useState(new Set());
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const hits = await fetchGlobalHitMsIds();
+        setGlobalHitMsIds(hits);
+      } catch (e) { /* leave empty — no ХИТ badges shown */ }
+    })();
+  }, []);
+
+  const loadHistory = async () => {
+    try {
+      const raw = localStorage.getItem('hermes_orders');
+      const loaded = raw ? JSON.parse(raw) : [];
+      loaded.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setHistory(loaded);
+    } catch (e) {
+      setHistory([]);
+    }
+  };
+
+  // Debounced search-as-you-type against МойСклад's own counterparty list, so
+  // reps pick the real existing card instead of retyping a name that might not
+  // match byte-for-byte (spacing, case, quotes) and silently create a duplicate.
+  const handleStoreNameChange = (value) => {
+    setStoreName(value);
+    if (storeNameError) setStoreNameError(false);
+    setSelectedCounterparty(null); // any manual edit invalidates a prior selection
+
+    if (storeSearchTimer.current) clearTimeout(storeSearchTimer.current);
+    const query = value.trim();
+    if (query.length < 2) { setStoreSuggestions([]); setShowStoreSuggestions(false); return; }
+
+    storeSearchTimer.current = setTimeout(async () => {
+      try {
+        const url = `${MOYSKLAD_API}/entity/counterparty?filter=name~${encodeURIComponent(query)}&limit=6`;
+        const res = await fetch(url, { headers: msHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        setStoreSuggestions((data.rows || []).map((r) => ({ href: r.meta.href, name: r.name })));
+        setShowStoreSuggestions(true);
+      } catch (e) { /* offline or blocked — rep can still type a name freely */ }
+    }, 350);
+  };
+
+  const pickStoreSuggestion = (s) => {
+    setStoreName(s.name);
+    setSelectedCounterparty(s);
+    setShowStoreSuggestions(false);
+    setStoreSuggestions([]);
+  };
+
+  // Rewrites one saved order in local history in place (used after a sync retry
+  // succeeds, so the "не отправлен" flag clears without duplicating the record).
+  const updateStoredOrder = (orderId, patch) => {
+    try {
+      const raw = localStorage.getItem('hermes_orders');
+      const existing = raw ? JSON.parse(raw) : [];
+      const next = existing.map((o) => (o.id === orderId ? { ...o, ...patch } : o));
+      localStorage.setItem('hermes_orders', JSON.stringify(next));
+    } catch (e) {}
+  };
+
+  // Best-effort: tries to push any orders that saved locally but never made it
+  // to МойСклад (e.g. the tablet was offline at the time). Silent on failure —
+  // this just quietly retries in the background, no need to interrupt anyone.
+  const retryUnsyncedOrders = React.useCallback(async () => {
+    let existing = [];
+    try {
+      const raw = localStorage.getItem('hermes_orders');
+      existing = raw ? JSON.parse(raw) : [];
+    } catch (e) { return; }
+    const pending = existing.filter((o) => !o.msSynced);
+    for (const order of pending) {
+      try {
+        await syncOrderToMoySklad(order);
+        updateStoredOrder(order.id, { msSynced: true });
+      } catch (e) { /* still offline or still failing — try again next time */ }
+    }
+  }, []);
+
+  React.useEffect(() => { retryUnsyncedOrders(); }, [retryUnsyncedOrders]);
+  React.useEffect(() => { loadHistory(); }, []); // preload silently so the loyalty badge has data from the first keystroke
+
+  // Adds a subtle shadow under the sticky header once the page has scrolled a
+  // little — purely a depth cue, most noticeable scrolling the long candy list.
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Best-effort stock check for drinks — if this fails (offline, blocked, or
+  // the report format doesn't match what we expect), stockByMsId just stays
+  // empty and every drink stays orderable as before. Nothing is ever blocked
+  // by a failed or missing stock read.
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const map = await fetchStockLevels();
+        setStockByMsId(map);
+      } catch (e) { /* leave stockByMsId empty — steppers stay enabled */ }
+    })();
+  }, []);
+
+  const [showHistory, setShowHistory] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const myOrders = useMemo(() => {
+    const norm = (s) => (s || '').trim().toLowerCase();
+    return history.filter((o) => norm(o.store) === norm(storeName));
+  }, [history, storeName]);
+
+  const confirmOrder = async () => {
+    if (!storeName.trim()) { setStoreNameError(true); return; }
+    const order = {
+      id: `order_${Date.now()}`,
+      store: storeName.trim(),
+      // Only trust the selected counterparty if the name still matches exactly —
+      // if the rep picked one from the list and then kept editing the text, this
+      // naturally falls back to a fresh name-based lookup/create instead.
+      counterpartyHref: (selectedCounterparty && selectedCounterparty.name === storeName.trim()) ? selectedCounterparty.href : null,
+      date: new Date().toISOString(),
+      items: items.map((i) => ({ name: i.name, packs: i.packs, unit: i.unit, totalUnits: i.totalUnits, unitPrice: i.unitPrice, lineTotal: i.lineTotal, msId: i.msId })),
+      totalPacks, totalSum,
+      msSynced: false,
+    };
+    try {
+      const raw = localStorage.getItem('hermes_orders');
+      const existing = raw ? JSON.parse(raw) : [];
+      existing.push(order);
+      localStorage.setItem('hermes_orders', JSON.stringify(existing));
+      setSaveError(false);
+      await loadHistory(); // refresh so the confirmation screen's loyalty badge reflects this order too
+    } catch (e) {
+      setSaveError(true);
+    }
+    setConfirmed(true);
+
+    // The order is already safe in local history at this point no matter what
+    // happens next — sync to МойСклад is a bonus, never a blocker.
+    setSyncStatus('syncing');
+    try {
+      await syncOrderToMoySklad(order);
+      updateStoredOrder(order.id, { msSynced: true });
+      setSyncStatus('ok');
+    } catch (e) {
+      setSyncStatus('error');
+      setSyncErrorMsg(e.message || 'Не удалось связаться с МойСклад');
+    }
+  };
+
+  const startNewOrder = () => {
+    // Unlike the tablet version, storeName is NOT reset here — this link
+    // belongs to one shop for the whole session, so a second order from the
+    // same visit shouldn't ask them to retype their own name.
+    setConfirmed(false); setShowSummary(false); setCart({}); setStoreNameError(false); setSaveError(false);
+    setSyncStatus('idle'); setSyncErrorMsg('');
+  };
+
+
+  // Sorting ~110 candy items with locale-aware compare is real work — memoize it so it
+  // only re-runs when the tab changes, not on every +/- click (cart updates don't
+  // change the sort order, so re-sorting on each of those was pure wasted CPU).
+  const tabProducts = useMemo(() => (
+    tab === 'Конфеты'
+      ? LIVE_PRODUCTS.filter((p) => p.cat === 'Конфеты').sort((a, b) => a.maker.localeCompare(b.maker, 'ru') || a.name.localeCompare(b.name, 'ru'))
+      : LIVE_PRODUCTS.filter((p) => p.cat === tab)
+  ), [tab, LIVE_PRODUCTS]);
+
+  const visible = useMemo(() => {
+    const q = catalogSearch.trim().toLowerCase();
+    if (!q) return tabProducts;
+    // Search stays within the current tab on purpose — a rep searching inside
+    // "Конфеты" almost certainly wants a candy result, not a stray drink match.
+    return tabProducts.filter((p) => p.name.toLowerCase().includes(q));
+  }, [tabProducts, catalogSearch]);
+
+  // One-time gate: until the shop enters (or picks, via autocomplete) their
+  // own name, show only that — the catalog never appears before this is
+  // set once per browser. Same search-as-you-type against МойСклад's
+  // counterparty list as the checkout step used to have, just moved here
+  // so it only has to be done once, not re-typed at the end.
+  if (!storeConfirmed) {
+    return (
+      <div style={{
+        fontFamily: 'system-ui, -apple-system, sans-serif', background: '#FAFAF7', minHeight: '100vh',
+        color: '#1A1A1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24,
+      }}>
+        <Logo />
+        <div style={{ fontSize: 16, fontWeight: 800, marginTop: 20, marginBottom: 4 }}>Ваш магазин</div>
+        <div style={{ fontSize: 13, color: '#8A8677', marginBottom: 22, textAlign: 'center' }}>Введите название один раз — дальше сразу к заказу</div>
+        <div style={{ width: '100%', maxWidth: 320, position: 'relative' }}>
+          <input
+            autoFocus
+            value={storeName}
+            onChange={(e) => handleStoreNameChange(e.target.value)}
+            onFocus={(e) => { if (!storeNameError) e.target.style.borderColor = STEPPER_COLOR; if (storeSuggestions.length > 0) setShowStoreSuggestions(true); }}
+            onBlur={(e) => { if (!storeNameError) e.target.style.borderColor = '#E2F0E4'; setTimeout(() => setShowStoreSuggestions(false), 150); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') confirmStoreGate(); }}
+            placeholder="Название магазина"
+            style={{
+              width: '100%', boxSizing: 'border-box', padding: '13px 14px', borderRadius: 12, fontSize: 15,
+              border: storeNameError ? '1.5px solid #E30613' : '1.5px solid #E2F0E4', outline: 'none',
+              background: '#fff', transition: 'border-color 0.15s',
+            }}
+          />
+          {selectedCounterparty && selectedCounterparty.name === storeName.trim() && (
+            <div style={{ fontSize: 11, color: '#1B5E20', fontWeight: 600, marginTop: 6 }}>✓ Существующий магазин — заказ привяжется к его карточке</div>
+          )}
+          {storeNameError && <div style={{ fontSize: 11.5, color: '#E30613', marginTop: 6, fontWeight: 600 }}>Введите название магазина</div>}
+          {showStoreSuggestions && storeSuggestions.length > 0 && (
+            <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4, background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', border: '1px solid #EFEFEF', zIndex: 15, overflow: 'hidden' }}>
+              {storeSuggestions.map((s) => (
+                <div
+                  key={s.href}
+                  onMouseDown={() => pickStoreSuggestion(s)}
+                  style={{ padding: '11px 14px', fontSize: 13.5, fontWeight: 600, borderBottom: '1px solid #F5F5F5', cursor: 'pointer' }}
+                >{s.name}</div>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={confirmStoreGate}
+          style={{
+            marginTop: 16, width: '100%', maxWidth: 320, border: 'none', borderRadius: 14, padding: '14px 18px',
+            fontSize: 15, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg, #2E7D32, #154D19)',
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(21,77,25,0.35)',
+          }}
+        >Продолжить</button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', background: '#FAFAF7', minHeight: '100vh', color: '#1A1A1A' }}>
+      <style>{`
+        .hermes-card { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 6px 16px rgba(0,0,0,0.05); }
+        .hermes-tier-fill { transition: width 0.35s cubic-bezier(0.3,0.8,0.4,1); }
+        @keyframes hermesShimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+        .hermes-shimmer { background: linear-gradient(90deg, #F2F2EE 25%, #FAFAF7 37%, #F2F2EE 63%); background-size: 400px 100%; animation: hermesShimmer 1.3s ease-in-out infinite; }
+        @keyframes hermesBounce { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+        .hermes-bounce { display: inline-block; animation: hermesBounce 0.22s ease-out; }
+        @keyframes hermesPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+        .hermes-pulse { animation: hermesPulse 1.1s ease-in-out infinite; }
+      `}</style>
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fff', borderBottom: '1px solid #eee', boxShadow: scrolled ? '0 4px 12px rgba(0,0,0,0.06)' : 'none', transition: 'box-shadow 0.15s ease' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '18px 0 14px', position: 'relative' }}>
+          <button
+            onClick={changeStore}
+            title="Изменить магазин"
+            style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', fontSize: 11, fontWeight: 600, color: '#B0AEA4', cursor: 'pointer', padding: '4px 2px', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          >{storeName}</button>
+          <Logo />
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', border: 'none', background: '#F4F4F4', borderRadius: 14, padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#1A1A1A', cursor: 'pointer' }}
+          >{showHistory ? 'Каталог' : 'Ваши заявки'}</button>
+        </div>
+        {!showHistory && <>
+            <div style={{ display: 'flex', gap: 8, padding: '12px 16px 12px', overflowX: 'auto' }}>
+              {TABS.map((t) => (
+                <button key={t} onClick={() => { setTab(t); setCatalogSearch(''); }} style={{
+                  border: 'none', cursor: 'pointer', padding: '10px 19px', borderRadius: 999,
+                  fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: 0.2,
+                  background: tab === t ? 'linear-gradient(135deg, #2E7D32, #154D19)' : '#EBF3EB',
+                  color: tab === t ? '#fff' : '#2E6B32',
+                  boxShadow: tab === t ? '0 4px 12px rgba(21,77,25,0.4)' : 'none',
+                  transition: 'all 0.15s',
+                }}>{t}</button>
+              ))}
+            </div>
+
+            <div style={{ padding: '0 16px 12px', position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 30, top: '50%', transform: 'translateY(-50%)', color: '#B0AEA4', pointerEvents: 'none' }}><Search size={15} /></span>
+              <input
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder={`Поиск по вкладке «${tab}»`}
+                style={{
+                  width: '100%', boxSizing: 'border-box', padding: '10px 14px 10px 34px', borderRadius: 12, fontSize: 13.5,
+                  border: '1.5px solid #EDEDE8', outline: 'none', background: '#FAFAF8', transition: 'border-color 0.15s',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = STEPPER_COLOR; }}
+                onBlur={(e) => { e.target.style.borderColor = '#EDEDE8'; }}
+              />
+            </div>
+
+            {showCandyHint && tab === 'Конфеты' && (
+              <div style={{ margin: '0 16px 12px', padding: '10px 12px', borderRadius: 12, background: '#FFF8E6', border: '1px solid #F3E4B0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12.5, color: '#7A5C1E', fontWeight: 600, flex: 1, lineHeight: 1.3 }}>
+                  💡 Скидка на конфеты растёт от общего числа коробок в заказе — неважно, каких именно.
+                </span>
+                <button onClick={() => setShowCandyHint(false)} style={{ border: 'none', background: 'transparent', color: '#7A5C1E', cursor: 'pointer', padding: 4, flexShrink: 0 }}><X size={14} /></button>
+              </div>
+            )}
+
+            {tab === 'Конфеты' && totalCandyPacksInCart > 0 && (() => {
+              const cqty = totalCandyPacksInCart;
+              const cpct = candyTierAt(cqty).pct;
+              const cnt = candyNextTier(cqty);
+              const maxScale = TIER_BREAKS[TIER_BREAKS.length - 1].min;
+              const fillPct = Math.max(0, Math.min(1, cqty / maxScale)) * 100;
+              const candySaved = items.filter((i) => i.group === 'Конфеты').reduce((s, i) => s + Math.round((i.sale - i.unitPrice) * i.totalUnits), 0);
+              return (
+                <div className="hermes-card" style={{ margin: '0 16px 12px', padding: '14px 16px', borderRadius: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1A1A' }}>{cqty} кор. конфет в заказе</span>
+                    <span style={{
+                      fontSize: 16, fontWeight: 800, color: '#fff', background: '#1B5E20', borderRadius: 999,
+                      padding: '2px 11px', opacity: cpct > 0 ? 1 : 0.4,
+                    }}>{cpct > 0 ? `−${cpct}%` : '0%'}</span>
+                  </div>
+
+                  <div style={{ position: 'relative', height: 8, borderRadius: 4, background: '#EDEDE8', overflow: 'visible' }}>
+                    <div className="hermes-tier-fill" style={{ height: '100%', width: `${fillPct}%`, borderRadius: 4, background: '#57B86E' }} />
+                    {TIER_BREAKS.filter((t) => t.min > 1 && t.min < maxScale).map((t) => (
+                      <div key={t.min} style={{ position: 'absolute', top: -1, left: `${(t.min / maxScale) * 100}%`, width: 2, height: 10, background: '#fff', borderRadius: 1 }} />
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, fontWeight: 600 }}>
+                    <span style={{ color: candySaved > 0 ? '#1B5E20' : '#B0AEA4', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {candySaved > 0 && <MoneyIcon size={13} />}
+                      {candySaved > 0 ? `выгода ${money(candySaved)}` : 'пока без выгоды'}
+                    </span>
+                    <span style={{ color: '#8A8677' }}>
+                      {cnt ? <>ещё <b style={{ color: '#1B5E20' }}>{cnt.min - cqty} кор.</b> до <b style={{ color: '#1B5E20' }}>−{cnt.pct}%</b></> : 'максимум 🎉'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+        </>}
+      </div>
+
+      {showHistory && (
+        <div style={{ padding: '16px 16px 40px' }}>
+          {myOrders.length === 0 && (
+            <div style={{ textAlign: 'center', color: '#8A8677', fontSize: 14, padding: '30px 0' }}>Заявок пока нет</div>
+          )}
+          {myOrders.map((o) => {
+            const expanded = expandedOrder === o.id;
+            const d = new Date(o.date);
+            const dateStr = d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={o.id} style={{ border: '1px solid #EFEFEF', borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setExpandedOrder(expanded ? null : o.id)}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 800 }}>{dateStr}</div>
+                    <div style={{ fontSize: 12, color: '#8A8677', marginTop: 2 }}>{o.totalPacks} уп./кор.</div>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800 }}>{money(o.totalSum)}</div>
+                </div>
+                {expanded && (
+                  <div style={{ marginTop: 10, borderTop: '1px solid #F5F5F5', paddingTop: 8 }}>
+                    {o.items.map((it, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '5px 0', color: '#333' }}>
+                        <span>{it.name} — {it.packs} {it.unit === 'бут.' ? 'уп.' : 'кор.'} ({fmt(it.totalUnits)} {it.unit})</span>
+                        <span style={{ fontWeight: 700 }}>{money(it.lineTotal)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!showHistory && (
+      <>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 14, padding: '16px 16px 130px' }}>
+        {visible.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#8A8677', fontSize: 14, padding: '30px 0' }}>
+            Ничего не нашлось по запросу «{catalogSearch}»
+          </div>
+        )}
+        {visible.map((p, idx) => {
+          const packs = cart[p.id] || 0;
+          const tierQty = p.group === 'Конфеты' ? totalCandyPacksInCart : packs;
+          const unitPrice = unitPriceAt(p, tierQty || 1);
+          const nt = nextTier(p, tierQty);
+          const discounted = unitPrice < p.sale;
+          const showHeader = tab === 'Конфеты' && (idx === 0 || visible[idx - 1].maker !== p.maker);
+          const showDupDivider = p.dup && (idx === 0 || !visible[idx - 1].dup);
+
+          return (
+            <React.Fragment key={p.id}>
+              {showHeader && (
+                <div style={{ gridColumn: '1 / -1', fontSize: 39, fontWeight: 800, color: CANDY_COLORS[p.maker] || '#8A6D3B', textTransform: 'uppercase', letterSpacing: 1, padding: idx === 0 ? '4px 2px 8px' : '28px 2px 8px', borderTop: idx === 0 ? 'none' : '2px solid #F0F0F0' }}>
+                  {p.maker}
+                </div>
+              )}
+              {showDupDivider && (
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10, padding: idx === 0 ? '4px 2px 8px' : '20px 2px 8px' }}>
+                  <div style={{ flex: 1, height: 1, background: '#E5DFD1' }} />
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#E8720F', letterSpacing: 1.2, textTransform: 'uppercase' }}>Дубль</span>
+                  <div style={{ flex: 1, height: 1, background: '#E5DFD1' }} />
+                </div>
+              )}
+              <ProductCard p={p} packs={packs} tierQty={tierQty} unitPrice={unitPrice} nt={nt} discounted={discounted} setPacks={setPacks} isHit={globalHitMsIds.has(p.msId)} outOfStock={p.group === 'Напитки' && !p.dup && p.msId in stockByMsId && stockByMsId[p.msId] <= 0} />
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {totalPacks > 0 && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 16px', background: 'linear-gradient(180deg, rgba(255,255,255,0), #fff 30%)' }}>
+          <button
+            onClick={() => setShowSummary(true)}
+            style={{
+              width: '100%', maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: `linear-gradient(135deg, #2E9E4C, ${STEPPER_COLOR_DARK})`, color: '#fff', border: 'none', borderRadius: 18,
+              padding: '13px 20px', cursor: 'pointer', boxShadow: `0 8px 24px ${STEPPER_COLOR}66, 0 2px 6px rgba(0,0,0,0.1)`,
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700 }}><ShoppingCart size={18} />{totalPacks} уп./кор.</span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{money(totalSum)}</span>
+              {totalSaved > 0 && (
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', lineHeight: 1, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.22)', borderRadius: 999, padding: '3px 8px' }}>
+                  <MoneyIcon size={11} />выгода {money(totalSaved)}
+                </span>
+              )}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {showSummary && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 20 }} onClick={() => setShowSummary(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: 480, borderRadius: '20px 20px 0 0', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 8px' }}>
+              <div style={{ fontSize: 19, fontWeight: 800 }}>Ваш заказ</div>
+              <button onClick={() => setShowSummary(false)} style={{ border: 'none', background: '#F4F4F4', borderRadius: 20, width: 32, height: 32, cursor: 'pointer' }}><X size={16} /></button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '4px 20px', flex: 1 }}>
+              {items.length === 0 && (
+                <div style={{ padding: '30px 0', textAlign: 'center', color: '#8A8677', fontSize: 14 }}>Корзина пуста</div>
+              )}
+              {['Напитки', 'Конфеты'].map((groupName) => {
+                const groupItems = items.filter((i) => i.group === groupName);
+                if (groupItems.length === 0) return null;
+                const groupSum = groupItems.reduce((s, i) => s + i.lineTotal, 0);
+                return (
+                  <div key={groupName}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 4px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#B0AEA4', textTransform: 'uppercase', letterSpacing: 0.5 }}>{groupName}</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#B0AEA4' }}>{money(groupSum)}</span>
+                    </div>
+                    {groupItems.map((i) => (
+                      <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, padding: '12px 0', borderBottom: '1px solid #F5F5F5' }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 700 }}>{i.name}</div>
+                          <div style={{ fontSize: 12, color: '#8A8677', marginTop: 2 }}>
+                            ({fmt(i.totalUnits)} {i.unit}) × {money(i.unitPrice)}
+                            {i.unitPrice < i.sale && <span style={{ color: i.color, fontWeight: 700 }}> (−{tierAt(i, i.tierQty).pct}%)</span>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                            <button
+                              onClick={() => setPacks(i.id, i.packs - 1)}
+                              aria-label="Уменьшить количество"
+                              style={{ width: 24, height: 24, borderRadius: 999, border: `1.5px solid ${STEPPER_COLOR}33`, background: `${STEPPER_COLOR}14`, color: STEPPER_COLOR, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            ><Minus size={12} /></button>
+                            <span style={{ fontSize: 13, fontWeight: 700, minWidth: 60 }}>{i.packs} {i.group === 'Напитки' ? 'уп.' : 'кор.'}</span>
+                            <button
+                              onClick={() => setPacks(i.id, i.packs + 1)}
+                              aria-label="Увеличить количество"
+                              style={{ width: 24, height: 24, borderRadius: 999, border: 'none', background: STEPPER_COLOR, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            ><Plus size={12} /></button>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap' }}>{money(i.lineTotal)}</div>
+                          <button
+                            onClick={() => setPacks(i.id, 0)}
+                            aria-label="Убрать из заказа"
+                            style={{ border: 'none', background: '#F4F4F4', borderRadius: 16, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ padding: '14px 20px 22px', borderTop: '1px solid #F5F5F5' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: totalSaved > 0 ? 6 : 14 }}>
+                <span style={{ fontSize: 15, color: '#8A8677', fontWeight: 600 }}>Итого</span>
+                <span style={{ fontSize: 22, fontWeight: 800 }}>{money(totalSum)}</span>
+              </div>
+              {totalSaved > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '13px 16px', borderRadius: 14,
+                  background: 'linear-gradient(135deg, #F3FBF1, #DFF3DE)', border: '1.5px solid #B9E4B8',
+                  boxShadow: '0 4px 14px rgba(46,158,76,0.16)',
+                }}>
+                  <span style={{
+                    width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg, #43B05C, ${STEPPER_COLOR_DARK})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0,
+                    boxShadow: '0 4px 10px rgba(27,94,32,0.4)',
+                  }}><MoneyIcon size={20} /></span>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: 'block', fontSize: 12, color: '#3C7A40', fontWeight: 700 }}>Ваша выгода на этом заказе</span>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 22, fontWeight: 900, color: '#1B5E20' }}>{money(totalSaved)}</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: '#2E9E4C', borderRadius: 999, padding: '2px 8px' }}>
+                        −{Math.round(totalSaved / (totalSum + totalSaved) * 100)}%
+                      </span>
+                    </span>
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={confirmOrder}
+                disabled={items.length === 0}
+                style={{ width: '100%', background: items.length === 0 ? '#CFCFCF' : '#1B5E20', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 800, cursor: items.length === 0 ? 'not-allowed' : 'pointer' }}
+              >Подтвердить заказ</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmed && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,20,0.55)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 30 }}
+          onClick={startNewOrder}
+        >
+          <style>{`
+            @keyframes hermesPopIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.03); opacity: 1; } 100% { transform: scale(1); } }
+            @keyframes hermesCheckDraw { to { stroke-dashoffset: 0; } }
+            @keyframes hermesRingPulse { 0% { box-shadow: 0 0 0 0 rgba(27,94,32,0.35); } 100% { box-shadow: 0 0 0 16px rgba(27,94,32,0); } }
+            @keyframes hermesConfetti { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--cx), var(--cy)) scale(0.4); opacity: 0; } }
+          `}</style>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 26, padding: '32px 28px 26px', maxWidth: 320, width: '90%', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.25)', animation: 'hermesPopIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2)' }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #2E7D32, #1B5E20)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', animation: 'hermesRingPulse 1.4s ease-out 0.3s',
+              }}
+            >
+              {reachedMaxDiscount && [
+                { x: -34, y: -30, c: '#F5C24C', d: '0.1s' }, { x: 32, y: -34, c: '#E30613', d: '0.15s' },
+                { x: -40, y: 10, c: '#57B86E', d: '0.2s' }, { x: 38, y: 14, c: '#1E4C9A', d: '0.1s' },
+                { x: -10, y: -44, c: '#E8720F', d: '0.25s' }, { x: 14, y: -42, c: '#F5C24C', d: '0.18s' },
+              ].map((p, idx) => (
+                <span key={idx} style={{
+                  position: 'absolute', top: '50%', left: '50%', width: 7, height: 7, borderRadius: '50%', background: p.c,
+                  '--cx': `${p.x}px`, '--cy': `${p.y}px`, animation: `hermesConfetti 0.7s ease-out ${p.d} forwards`,
+                }} />
+              ))}
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="24" strokeDashoffset="24" style={{ animation: 'hermesCheckDraw 0.4s ease-out 0.25s forwards' }}
+                />
+              </svg>
+            </div>
+            <div style={{ fontSize: 19, fontWeight: 800, color: '#1A1A1A' }}>{reachedMaxDiscount ? 'Отличный заказ! 🎉' : 'Заказ оформлен!'}</div>
+            <div style={{ fontSize: 14, color: '#5C5850', marginTop: 8, lineHeight: 1.5 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <span style={{ fontWeight: 700, color: '#1A1A1A' }}>{storeName}</span>
+                {(() => {
+                  const tier = customerTier(countStoreOrders(history, storeName));
+                  return tier && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 800, color: '#fff', background: tier.gradient, border: `1px solid ${tier.border}`, borderRadius: 999, padding: '2px 8px', letterSpacing: 0.4, boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }}>
+                      <Star size={8} />{tier.label}
+                    </span>
+                  );
+                })()}
+              </span>
+              <br />
+              {totalPacks} уп./кор. на сумму <span style={{ fontWeight: 700, color: '#1B5E20' }}>{money(totalSum)}</span>
+            </div>
+            {totalSaved > 0 && (
+              <div style={{
+                marginTop: 14, padding: '14px 16px', borderRadius: 16, textAlign: 'center',
+                background: 'linear-gradient(135deg, #F3FBF1, #DFF3DE)', border: '1.5px solid #B9E4B8',
+                boxShadow: '0 4px 14px rgba(46,158,76,0.16)',
+              }}>
+                <span style={{
+                  width: 38, height: 38, borderRadius: '50%', background: `linear-gradient(135deg, #43B05C, ${STEPPER_COLOR_DARK})`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', margin: '0 auto 8px',
+                  boxShadow: '0 4px 10px rgba(27,94,32,0.4)',
+                }}><MoneyIcon size={19} /></span>
+                <div style={{ fontSize: 12, color: '#3C7A40', fontWeight: 700 }}>Ваша выгода на этом заказе</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 7, marginTop: 3 }}>
+                  <span style={{ fontSize: 24, color: '#1B5E20', fontWeight: 900 }}>{money(totalSaved)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: '#2E9E4C', borderRadius: 999, padding: '2px 8px' }}>
+                    −{Math.round(totalSaved / (totalSum + totalSaved) * 100)}%
+                  </span>
+                </div>
+              </div>
+            )}
+            {saveError && <div style={{ fontSize: 12, color: '#E30613', marginTop: 10 }}>Не удалось сохранить заявку в историю — но заказ оформлен</div>}
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 10.5, fontWeight: 500, color: '#B0AEA4' }}>
+              {syncStatus === 'syncing' && <span>отправка в МойСклад...</span>}
+              {syncStatus === 'ok' && <span>✓ отправлено в МойСклад</span>}
+              {syncStatus === 'error' && (
+                <span style={{ lineHeight: 1.4 }}>
+                  не отправлено в МойСклад — попробуем снова автоматически
+                  <br /><span style={{ fontSize: 9.5, wordBreak: 'break-word' }}>({syncErrorMsg})</span>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={startNewOrder}
+              style={{ marginTop: 20, width: '100%', background: '#1B5E20', color: '#fff', border: 'none', borderRadius: 14, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            >Новый заказ</button>
+          </div>
+        </div>
+      )}
+      </>
+      )}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<HermesOrderApp />);
+
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
