@@ -5,6 +5,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Гермес — Заказ</title>
+
+  <!-- Open Graph / Twitter Card — this is what WhatsApp, Telegram, etc. read
+       to build the preview card (title + description + thumbnail) shown
+       above the link when it's pasted into a chat, instead of a bare URL.
+       Image and url must be absolute (full https://...) — relative paths
+       don't work here, unlike the rest of the page. If the site's address
+       ever changes, update the two "https://hermesalania-droid.github.io/hermes-shop/"
+       lines below to match. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Гермес" />
+  <meta property="og:title" content="Гермес: сделать заявку" />
+  <meta property="og:description" content="Каталог напитков и конфет для магазинов — оформите заказ прямо здесь, без звонков и переписки." />
+  <meta property="og:image" content="https://hermesalania-droid.github.io/hermes-shop/icon-512.png" />
+  <meta property="og:url" content="https://hermesalania-droid.github.io/hermes-shop/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Гермес: сделать заявку" />
+  <meta name="twitter:description" content="Каталог напитков и конфет для магазинов — оформите заказ прямо здесь, без звонков и переписки." />
+  <meta name="twitter:image" content="https://hermesalania-droid.github.io/hermes-shop/icon-512.png" />
+
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="theme-color" content="#1B5E20" />
@@ -432,8 +451,14 @@ function computeMaxpct(sale, buy) {
 }
 async function fetchLivePrices(msIds) {
   if (msIds.length === 0) return {};
-  const idFilters = msIds.map((id) => `filter=id=${id}`).join('&');
-  const url = `${MOYSKLAD_API}/entity/product?${idFilters}&limit=1000`;
+  // МойСклад's OR-for-one-field syntax is semicolon-separated values inside
+  // a SINGLE filter param (filter=id=X;id=Y;id=Z) — NOT repeated filter=
+  // params. The earlier version sent filter=id=X&filter=id=Y&... which this
+  // API almost certainly doesn't parse as "any of these" the way intended,
+  // so buy/sale prices came back wrong even though they're set correctly in
+  // МойСклад itself.
+  const filterValue = msIds.map((id) => `id=${id}`).join(';');
+  const url = `${MOYSKLAD_API}/entity/product?filter=${encodeURIComponent(filterValue)}&limit=1000`;
   const res = await fetch(url, { headers: msHeaders() });
   if (!res.ok) throw new Error(`Цены: ${res.status}`);
   const data = await res.json();
@@ -759,9 +784,23 @@ function HermesOrderApp() {
   }, []);
   // Overlays live sale/buy/maxpct on top of the bundled catalog — everything
   // else about a product (tab, image, pack size, name) still comes from code.
+  // Overlays live sale price on top of the bundled catalog. maxpct (the
+  // discount ceiling) is only recomputed from the live margin when МойСклад
+  // actually returns a real buy price — a lot of drink products don't have
+  // buyPrice filled in there yet, and treating that as "cost is 0" wiped out
+  // every hand-set maxpct (silently zeroing all drink discounts while candy,
+  // which never checks maxpct, kept working). Missing live cost now just
+  // keeps the bundled maxpct/buy above instead of collapsing to 0.
   const LIVE_PRODUCTS = useMemo(() => PRODUCTS.map((p) => {
     const lp = p.msId && livePrices[p.msId];
-    return lp ? { ...p, sale: lp.sale, buy: lp.buy, maxpct: lp.maxpct } : p;
+    if (!lp) return p;
+    const haveRealCost = lp.buy && lp.buy > 0;
+    return {
+      ...p,
+      sale: lp.sale,
+      buy: haveRealCost ? lp.buy : p.buy,
+      maxpct: haveRealCost ? computeMaxpct(lp.sale, lp.buy) : p.maxpct,
+    };
   }), [livePrices]);
 
   const setPacks = React.useCallback((id, packs) => setCart((c) => {
