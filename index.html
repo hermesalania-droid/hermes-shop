@@ -288,19 +288,26 @@ const PRODUCTS = [
 const TABS = ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi', 'Конфеты'];
 
 // ---------- МойСклад sync ----------
-// The API user behind this token has ONLY rights to view products/counterparties/
-// stores/organizations and to create customer orders — nothing else (see project
-// notes). Losing this string still can't expose finances, reports, or other data.
-const MOYSKLAD_AUTH = 'Basic aGVybWVzLWFwaUB1cnVtZXJ1czptMWxhbjJvbzE=';
-const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
+// Requests go through a Cloudflare Worker proxy instead of api.moysklad.ru
+// directly — a plain browser fetch() to МойСклад gets blocked by CORS (it
+// sends no Access-Control-Allow-Origin header; this is exactly why the
+// tablet app needed CapacitorHttp — there's no such bypass on the web). The
+// proxy runs server-side, isn't subject to CORS, adds the right headers on
+// the way back, and holds the login/password itself now — the browser
+// doesn't send an Authorization header at all anymore.
+const MOYSKLAD_API = 'https://shop.hermes-alania.workers.dev';
+// meta.href values we build ourselves and put INSIDE request bodies (order
+// positions, organization, store) must still point at the real МойСклад
+// domain — that's how МойСклад recognizes them as references to its own
+// entities. Only the outgoing fetch() calls above go through the proxy;
+// hrefs МойСклад returns in its own responses are already correct as-is.
+const MOYSKLAD_REAL_API = 'https://api.moysklad.ru/api/remap/1.2';
 const MOYSKLAD_ORG_ID = '774df1ec-302d-11f1-0a80-0782001ca5f8'; // ТД ГЕРМЕС
 const MOYSKLAD_STORE_ID = '774f50d5-302d-11f1-0a80-0782001ca5fb'; // ТД ГЕРМЕС
 
 function msHeaders() {
   return {
-    'Authorization': MOYSKLAD_AUTH,
     'Content-Type': 'application/json',
-    'Accept-Encoding': 'gzip',
   };
 }
 
@@ -331,7 +338,7 @@ async function findOrCreateCounterparty(storeName) {
 // way yet). Any failure here should never block ordering, so callers treat a
 // thrown error as "unknown stock" rather than "out of stock".
 async function fetchStockLevels() {
-  const storeHref = `${MOYSKLAD_API}/entity/store/${MOYSKLAD_STORE_ID}`;
+  const storeHref = `${MOYSKLAD_REAL_API}/entity/store/${MOYSKLAD_STORE_ID}`;
   const url = `${MOYSKLAD_API}/report/stock/all?filter=store=${encodeURIComponent(storeHref)}&limit=1000`;
   const res = await fetch(url, { headers: msHeaders() });
   if (!res.ok) throw new Error(`Остатки: ${res.status}`);
@@ -406,7 +413,7 @@ async function syncOrderToMoySklad(order) {
     price: Math.round(i.unitPrice * 100),
     assortment: {
       meta: {
-        href: `${MOYSKLAD_API}/entity/product/${i.msId}`,
+        href: `${MOYSKLAD_REAL_API}/entity/product/${i.msId}`,
         type: 'product',
         mediaType: 'application/json',
       },
@@ -414,9 +421,9 @@ async function syncOrderToMoySklad(order) {
   }));
 
   const body = {
-    organization: { meta: { href: `${MOYSKLAD_API}/entity/organization/${MOYSKLAD_ORG_ID}`, type: 'organization', mediaType: 'application/json' } },
+    organization: { meta: { href: `${MOYSKLAD_REAL_API}/entity/organization/${MOYSKLAD_ORG_ID}`, type: 'organization', mediaType: 'application/json' } },
     agent: { meta: { href: agentHref, type: 'counterparty', mediaType: 'application/json' } },
-    store: { meta: { href: `${MOYSKLAD_API}/entity/store/${MOYSKLAD_STORE_ID}`, type: 'store', mediaType: 'application/json' } },
+    store: { meta: { href: `${MOYSKLAD_REAL_API}/entity/store/${MOYSKLAD_STORE_ID}`, type: 'store', mediaType: 'application/json' } },
     // Rep name goes into the plain "description" (comment) field on the
     // МойСклад order — no custom attribute setup needed on their side, and
     // it's visible right on the order card.
