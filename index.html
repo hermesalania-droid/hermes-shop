@@ -1147,6 +1147,13 @@ function HermesOrderApp() {
         .hermes-bounce { display: inline-block; animation: hermesBounce 0.22s ease-out; }
         @keyframes hermesPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
         .hermes-pulse { animation: hermesPulse 1.1s ease-in-out infinite; }
+        /* Fixed 2-up grid on phones — auto-fill with a 190px floor was
+           collapsing to a single column on narrower screens (2 × 190px +
+           gap doesn't fit under ~400px). From tablet width up, let it widen
+           to 3, then 4 columns instead of stretching 2 huge cards. */
+        .hermes-grid { grid-template-columns: repeat(2, 1fr); }
+        @media (min-width: 640px) { .hermes-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 900px) { .hermes-grid { grid-template-columns: repeat(4, 1fr); } }
       `}</style>
       <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fff', borderBottom: '1px solid #eee', boxShadow: scrolled ? '0 4px 12px rgba(0,0,0,0.06)' : 'none', transition: 'box-shadow 0.15s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '18px 0 14px', position: 'relative' }}>
@@ -1275,7 +1282,7 @@ function HermesOrderApp() {
       {!showHistory && (
       <>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 14, padding: '16px 16px 130px' }}>
+      <div className="hermes-grid" style={{ display: 'grid', gap: 14, padding: '16px 16px 130px' }}>
         {visible.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#8A8677', fontSize: 14, padding: '30px 0' }}>
             Ничего не нашлось по запросу «{catalogSearch}»
