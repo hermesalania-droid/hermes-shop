@@ -228,7 +228,7 @@ const CANDY_DATA = [
   { msId: '31368927-90d8-11f1-0a80-115d00125303', name: 'Крепыш с ирисом', maker: 'Красный Октябрь', pack: 3.0, unit: 'кг', sale: 380.0, buy: 340.0, maxpct: 5.3 },
   { msId: '58352d39-9981-11f1-0a80-0056003799e6', name: 'Тёмный шоколад Бабаевский Люкс 75г', maker: 'Бабаевский', pack: 18, unit: 'шт.', sale: 90.0, buy: 70.0, maxpct: 11.1 },
 ];
-const DRINK_COLORS = { 'Coca-Cola': '#E30613', 'Fanta': '#F5871F', 'Sprite': '#2E9E4C', 'Pepsi': '#1E4C9A' };
+const DRINK_COLORS = { 'Coca-Cola': '#E30613', 'Fanta': '#F5871F', 'Sprite': '#2E9E4C', 'Pepsi': '#1E4C9A', 'Натахтари': '#7B1E2B', 'Липтон': '#F5C400' };
 // Drink names end with a country-of-import abbreviation (IR, GR, AZ, UZB, KZ).
 // splitOrigin() pulls that off into its own field so it can render as a
 // separate badge instead of sitting inside the product name text.
@@ -263,6 +263,34 @@ const DRINKS_DUPLICATES = [
   { msId: '76717f27-a270-11f1-0a80-105100034f71', name: 'Coca-Cola 1л', brand: 'Coca-Cola', pack: 9, sale: 70.0, buy: 35.0, maxpct: 25.0, dup: true, imgSrc: 'images/4.jpg', origin: 'Грузия' },
 ];
 
+// Added Sep 2026. Натахтари 1л/2л share one photo per flavor (identical label
+// art at both sizes). maxpct here is hand-computed the same way the original
+// catalog's was — half the (sale − buy) margin — since МойСклад's buyPrice
+// field isn't visible to our limited-rights API account (confirmed: present
+// in the МойСклад UI, absent from every API response), so the live-price
+// fetch can never compute it automatically for these like it does when buy
+// data IS visible. If the margin/prices change, this needs updating by hand.
+//   2л: (150 − 93.38) / 150 = 37.75% → maxpct 18.9
+//   1л: (95 − 53.36) / 95 = 43.83% → maxpct 21.9
+// Lipton's sale price isn't set yet (David's checking with a shop on typical
+// pricing) — left at 0 on purpose. See the "hide unpriced drinks" filter
+// below tabProducts: anything at sale 0 simply doesn't show up in the
+// catalog yet, rather than displaying a ₽0.00 card. Flip sale once it's
+// decided (buy 35.86 is already confirmed) — maxpct can stay 0 until then,
+// or be computed the same way once a price is picked.
+const DRINKS_NEW = [
+  { msId: '0c5c0588-ac67-11f1-0a80-1fd4002157e8', name: 'Натахтари 2л Саперави', brand: 'Натахтари', pack: 6, sale: 150.0, buy: 93.38, maxpct: 18.9, img: 'images/125.jpg', origin: 'Грузия' },
+  { msId: '196bc9ab-ac67-11f1-0a80-00b0001f2585', name: 'Натахтари 2л Тархун', brand: 'Натахтари', pack: 6, sale: 150.0, buy: 93.38, maxpct: 18.9, img: 'images/126.jpg', origin: 'Грузия' },
+  { msId: '28a60b14-ac67-11f1-0a80-0dee001ed538', name: 'Натахтари 2л Фейхоа', brand: 'Натахтари', pack: 6, sale: 150.0, buy: 93.38, maxpct: 18.9, img: 'images/127.jpg', origin: 'Грузия' },
+  { msId: 'f4d34a85-ac66-11f1-0a80-1aae001fd7ff', name: 'Натахтари 2л Груша', brand: 'Натахтари', pack: 6, sale: 150.0, buy: 93.38, maxpct: 18.9, img: 'images/128.jpg', origin: 'Грузия' },
+  { msId: 'ac40a117-ac66-11f1-0a80-02f3001fb1a3', name: 'Натахтари 1л Саперави', brand: 'Натахтари', pack: 9, sale: 95.0, buy: 53.36, maxpct: 21.9, img: 'images/125.jpg', origin: 'Грузия' },
+  { msId: 'ba4800f7-ac66-11f1-0a80-1ecb001fbc4a', name: 'Натахтари 1л Тархун', brand: 'Натахтари', pack: 9, sale: 95.0, buy: 53.36, maxpct: 21.9, img: 'images/126.jpg', origin: 'Грузия' },
+  { msId: 'c965e229-ac66-11f1-0a80-1657001e21f8', name: 'Натахтари 1л Фейхоа', brand: 'Натахтари', pack: 9, sale: 95.0, buy: 53.36, maxpct: 21.9, img: 'images/127.jpg', origin: 'Грузия' },
+  { msId: '7ac5ff59-ac66-11f1-0a80-1149001f78b9', name: 'Натахтари 1л Груша', brand: 'Натахтари', pack: 9, sale: 95.0, buy: 53.36, maxpct: 21.9, img: 'images/128.jpg', origin: 'Грузия' },
+  { msId: 'bf063731-ac67-11f1-0a80-1fd400217ee2', name: 'Липтон 1л Персик', brand: 'Липтон', pack: 12, sale: 0, buy: 35.86, maxpct: 0, img: 'images/129.jpg' },
+  { msId: 'aeee79af-ac67-11f1-0a80-15f9001fb1fc', name: 'Липтон 1л Зелёный', brand: 'Липтон', pack: 12, sale: 0, buy: 35.86, maxpct: 0, img: 'images/130.jpg' },
+];
+
 let _id = 1;
 const PRODUCTS = [
   ...DRINKS_DATA.map((d) => {
@@ -283,9 +311,22 @@ const PRODUCTS = [
     id: _id++, cat: d.brand, group: 'Напитки', name: d.name, unit: 'бут.',
     pack: d.pack, sale: d.sale, buy: d.buy, maxpct: d.maxpct, color: DRINK_COLORS[d.brand],
     dup: d.dup, img: d.imgSrc, msId: d.msId, origin: d.origin,
+  })))
+  .concat(DRINKS_NEW.map((d) => ({
+    id: _id++, cat: d.brand, group: 'Напитки', name: d.name, unit: 'бут.',
+    pack: d.pack, sale: d.sale, buy: d.buy, maxpct: d.maxpct, color: DRINK_COLORS[d.brand] || '#2E6B32',
+    img: d.img, msId: d.msId, origin: d.origin,
   })));
 
-const TABS = ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi', 'Конфеты'];
+const TABS = ['Напитки', 'Конфеты'];
+
+// Display order for the merged "Напитки" tab. Needed because Coca-Cola's
+// "ДУБЛЬ" duplicate listings live later in the raw PRODUCTS array (appended
+// after DRINKS_DUPLICATES) than Fanta/Pepsi/Sprite/etc — without this, they'd
+// float to the very end instead of sitting right after the regular Coca-Cola
+// lineup. Array.sort is stable, so within one brand the original relative
+// order (regular items, then dup) is preserved automatically.
+const BRAND_ORDER = ['Coca-Cola', 'Fanta', 'Pepsi', 'Sprite', 'Натахтари', 'Липтон'];
 
 // ---------- МойСклад sync ----------
 // Requests go through a Cloudflare Worker proxy instead of api.moysklad.ru
@@ -385,7 +426,7 @@ async function fetchGlobalHitMsIds() {
   const countFor = (msId) => counts[msId] || 0;
   const hitSet = new Set();
 
-  ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi'].forEach((brand) => {
+  ['Coca-Cola', 'Fanta', 'Sprite', 'Pepsi', 'Натахтари', 'Липтон'].forEach((brand) => {
     const brandItems = PRODUCTS.filter((p) => p.cat === brand && !p.dup && p.msId);
     brandItems.sort((a, b) => countFor(b.msId) - countFor(a.msId));
     brandItems.slice(0, 2).forEach((p) => { if (countFor(p.msId) > 0) hitSet.add(p.msId); });
@@ -729,7 +770,7 @@ const ProductCard = React.memo(ProductCardInner);
 
 function HermesOrderApp() {
   const [cart, setCart] = useState({}); // id -> packs ordered
-  const [tab, setTab] = useState('Coca-Cola');
+  const [tab, setTab] = useState('Напитки');
   const [showSummary, setShowSummary] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [storeName, setStoreName] = useState(() => {
@@ -1018,10 +1059,16 @@ function HermesOrderApp() {
   // Sorting ~110 candy items with locale-aware compare is real work — memoize it so it
   // only re-runs when the tab changes, not on every +/- click (cart updates don't
   // change the sort order, so re-sorting on each of those was pure wasted CPU).
+  // Drinks keep their natural DRINKS_DATA order (already grouped Coca-Cola →
+  // Fanta → Pepsi → Sprite → Натахтари → Липтон block by block) now that all
+  // brands share one tab — no explicit sort needed, just filter by group.
+  // Anything priced at 0 (a new item added before its sale price is decided,
+  // like Lipton right now) is held back from the visible list entirely
+  // rather than showing a ₽0.00 card — flip its `sale` above once it's set.
   const tabProducts = useMemo(() => (
     tab === 'Конфеты'
-      ? LIVE_PRODUCTS.filter((p) => p.cat === 'Конфеты').sort((a, b) => a.maker.localeCompare(b.maker, 'ru') || a.name.localeCompare(b.name, 'ru'))
-      : LIVE_PRODUCTS.filter((p) => p.cat === tab)
+      ? LIVE_PRODUCTS.filter((p) => p.group === 'Конфеты' && p.sale > 0).sort((a, b) => a.maker.localeCompare(b.maker, 'ru') || a.name.localeCompare(b.name, 'ru'))
+      : LIVE_PRODUCTS.filter((p) => p.group === 'Напитки' && p.sale > 0).sort((a, b) => BRAND_ORDER.indexOf(a.cat) - BRAND_ORDER.indexOf(b.cat))
   ), [tab, LIVE_PRODUCTS]);
 
   const visible = useMemo(() => {
@@ -1241,13 +1288,31 @@ function HermesOrderApp() {
           const nt = nextTier(p, tierQty);
           const discounted = unitPrice < p.sale;
           const showHeader = tab === 'Конфеты' && (idx === 0 || visible[idx - 1].maker !== p.maker);
+          const showBrandHeader = tab === 'Напитки' && (idx === 0 || visible[idx - 1].cat !== p.cat);
           const showDupDivider = p.dup && (idx === 0 || !visible[idx - 1].dup);
+          // Натахтари lists 2л then 1л back to back (see BRAND_ORDER/DRINKS_NEW) —
+          // a soft divider marks where the litre size changes, same visual
+          // language as the "Дубль" divider above, just neutral-toned instead
+          // of orange since this isn't flagging a special/duplicate listing.
+          const showVolumeDivider = p.cat === 'Натахтари' && p.name.includes('1л') && idx > 0 && visible[idx - 1].cat === 'Натахтари' && !visible[idx - 1].name.includes('1л');
 
           return (
             <React.Fragment key={p.id}>
               {showHeader && (
                 <div style={{ gridColumn: '1 / -1', fontSize: 39, fontWeight: 800, color: CANDY_COLORS[p.maker] || '#8A6D3B', textTransform: 'uppercase', letterSpacing: 1, padding: idx === 0 ? '4px 2px 8px' : '28px 2px 8px', borderTop: idx === 0 ? 'none' : '2px solid #F0F0F0' }}>
                   {p.maker}
+                </div>
+              )}
+              {showBrandHeader && (
+                <div style={{ gridColumn: '1 / -1', fontSize: 39, fontWeight: 800, color: DRINK_COLORS[p.cat] || '#2E6B32', textTransform: 'uppercase', letterSpacing: 1, padding: idx === 0 ? '4px 2px 8px' : '28px 2px 8px', borderTop: idx === 0 ? 'none' : '2px solid #F0F0F0' }}>
+                  {p.cat}
+                </div>
+              )}
+              {showVolumeDivider && (
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 2px 8px' }}>
+                  <div style={{ flex: 1, height: 1, background: '#EFEFEF' }} />
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#B0AEA4', letterSpacing: 1, textTransform: 'uppercase' }}>1 литр</span>
+                  <div style={{ flex: 1, height: 1, background: '#EFEFEF' }} />
                 </div>
               )}
               {showDupDivider && (
